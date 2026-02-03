@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using ss.Internal.Management.Server.AutoRef;
 
 namespace ss.Internal.Management.Server
 {
