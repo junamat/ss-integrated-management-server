@@ -27,6 +27,11 @@ public class ModelsContext : DbContext
             {
                 builder.ToJson();
             });
+            
+            entity.OwnsOne(m => m.Referee, builder =>
+            {
+                builder.ToJson();
+            });
         });
     }
 }

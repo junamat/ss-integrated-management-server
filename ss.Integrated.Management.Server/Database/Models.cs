@@ -12,6 +12,8 @@ public class Models
         public TeamInfo TeamRed { get; set; }
         public TeamInfo TeamBlue { get; set; }
         public DateTime StartTime { get; set; }
+        public bool IsOver { get; set; }
+        public RefereeInfo Referee { get; set; }
     }
 
     public class Round
@@ -31,7 +33,6 @@ public class Models
 
     public class RefereeInfo
     {
-        public string Id { get; set;}
         public string DisplayName { get; set; }
         public string DiscordID { get; set; }
         public string OsuID { get; set; }
