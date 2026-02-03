@@ -8,10 +8,12 @@ namespace ss.Internal.Management.Server.AutoRef;
 public partial class AutoRef
 {
     private IBanchoClient client;
+    private MatchInfo currentMatch;
+    
     
     public AutoRef(string id, string type, string refId)
     {
-        MatchInfo currentMatch = GetMatchFromId(Program.ConnectionString, id).Result;
+        currentMatch = GetMatchFromId(Program.ConnectionString, id).Result;
         RefereeInfo referee = GetRefereeIRCLogin(Program.ConnectionString, refId).Result;
         client = new BanchoClient(new BanchoClientConfig(new IrcCredentials(referee.Username, referee.Password)));
 
@@ -20,17 +22,25 @@ public partial class AutoRef
 
     private void matchStart()
     {
-        // logica
+        client.MakeTournamentLobbyAsync(
+            Program.TournamentName + ": (" + currentMatch.Team1.DisplayName + ") vs. (" +
+            currentMatch.Team2.DisplayName + ")", true);
     }
 
     public struct MatchInfo
     {
         public string Id { get; set; }
-        public string Team1 { get; set; }
-        public string Team2 { get; set; }
+        public PlayerInfo Team1 { get; set; }
+        public PlayerInfo Team2 { get; set; } // deberia ser el id de osu 
         public string BestOf { get; set; }
         public string Round { get; set; }
         public string Type { get; set; }
+    }
+    
+    public struct PlayerInfo 
+    {
+        public string osuId { get; set; }
+        public string DisplayName { get; set; }
     }
      
     public struct RefereeInfo
@@ -51,12 +61,12 @@ public partial class AutoRef
         return new MatchInfo
         {
             Id = reader.GetString("match_id"),
-            Team1 = reader.GetString("match_team1"),
-            Team2 = reader.GetString("match_team2"),
+            Team1 = new PlayerInfo { DisplayName = reader.GetString("match_team1") },
+            Team2 = new PlayerInfo { DisplayName = reader.GetString("match_team2") },
             BestOf = reader.GetString("match_bestOf"),
             Round = reader.GetString("match_round"),
             Type = reader.GetString("match_type")
-        };
+        };  
     }
     
     public static async Task<RefereeInfo> GetRefereeIRCLogin(string connectionString, string refName)
