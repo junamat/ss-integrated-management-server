@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using Microsoft.EntityFrameworkCore;
 
 namespace ss.Internal.Management.Server.AutoRef;
 
@@ -30,9 +31,10 @@ public class Models
         public string DiscordID { get; set; }
         public string OsuID { get; set; }
     }
-
+    
     public class RefereeInfo
     {
+        public string Id { get; set; }
         public string DisplayName { get; set; }
         public string DiscordID { get; set; }
         public string OsuID { get; set; }
