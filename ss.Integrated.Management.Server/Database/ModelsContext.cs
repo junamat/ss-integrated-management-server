@@ -11,22 +11,13 @@ public class ModelsContext : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Models.Match>(entity =>
+        modelBuilder.Entity<Models.TeamInfo>(entity =>
         {
-            entity.OwnsOne(m => m.Round, builder =>
-            {
-                builder.ToJson(); 
-            });
-            
-            entity.OwnsOne(m => m.TeamRed, builder =>
-            {
-                builder.ToJson();
-            });
-            
-            entity.OwnsOne(m => m.TeamBlue, builder =>
-            {
-                builder.ToJson();
-            });
+            entity.HasOne(t => t.OsuData)
+                .WithMany()
+                .HasForeignKey(t => t.OsuID);
+
+            entity.Navigation(t => t.OsuData).AutoInclude();
         });
     }
 }
