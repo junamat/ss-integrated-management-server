@@ -3,3 +3,7 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+ss.Integrated.Management.Server/.idea/.idea.ss.Integrated.Management.dir/.idea/dataSources.xml
+/ss.Integrated.Management.Server
+ss.Integrated.Management.Server/Folder.DotSettings.user
+*.user
