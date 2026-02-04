@@ -6,13 +6,13 @@ namespace ss.Internal.Management.Server.AutoRef;
 
 public partial class AutoRef
 {
-    private Models.Match currentMatch;
+    private Models.Match? currentMatch;
     private readonly string matchId;
     private readonly string refDisplayName;
     private readonly Models.MatchType type;
     
-    private IBanchoClient client;
-    private string lobbyChannelName;
+    private IBanchoClient? client;
+    private string? lobbyChannelName;
     
     private int[] matchScore = [0, 0];
     private bool auto = false;
