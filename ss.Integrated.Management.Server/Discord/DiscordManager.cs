@@ -14,9 +14,9 @@ public class DiscordManager
     private readonly InteractionService interactionService;
     private readonly IServiceProvider services;
 
-    private readonly ulong guildId = 806245928927100938;
+    private readonly ulong guildId = Convert.ToUInt64(Environment.GetEnvironmentVariable("DISCORD_GUILD_ID"));
+    private readonly ulong targetCategoryId = Convert.ToUInt64(Environment.GetEnvironmentVariable("DISCORD_REFEREE_CATEGORY_ID"));
     private readonly string token;
-    private readonly ulong targetCategoryId;
 
     // Diccionarios de estado para saber lo que acontece. Por si me olvido (ocurrirá):
     // activeChannels => <match_id, channel_id>
@@ -24,10 +24,9 @@ public class DiscordManager
     private ConcurrentDictionary<string, ulong> activeChannels = new();
     private ConcurrentDictionary<string, AutoRef.AutoRef> activeMatches = new();
 
-    public DiscordManager(string token, ulong categoryId)
+    public DiscordManager(string token)
     {
         this.token = token;
-        targetCategoryId = categoryId;
 
         client = new DiscordSocketClient(new DiscordSocketConfig
         {

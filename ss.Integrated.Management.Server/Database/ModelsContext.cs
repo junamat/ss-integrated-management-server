@@ -7,7 +7,7 @@ public class ModelsContext : DbContext
     public DbSet<Models.Match> Matches { get; set; }
     public DbSet<Models.RefereeInfo> Referees { get; set; }
     
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseNpgsql("Host=localhost;Database=ss;Username=ss;Password=ss;");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING") ?? throw new InvalidOperationException());
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
