@@ -12,7 +12,7 @@ public partial class AutoRef
     private readonly Models.MatchType type;
     
     private IBanchoClient? client;
-    private string? lobbyChannelName;
+    public string? LobbyChannelName;
     
     private int[] matchScore = [0, 0];
     private bool auto = false;
@@ -80,12 +80,17 @@ public partial class AutoRef
         {
             var parts = content.Split('/');
             var idPart = parts.Last().Split(' ')[0];
-            lobbyChannelName = $"#mp_{idPart}";
+            LobbyChannelName = $"#mp_{idPart}";
 
-            await client.JoinChannelAsync(lobbyChannelName);
+            await client.JoinChannelAsync(LobbyChannelName);
             await InitializeLobbySettings();
             joined = true;
             return;
+        }
+
+        if (senderNick == "BanchoBot" && content.Contains("Closed the match"))
+        {
+            await client.DisconnectAsync();
         }
         
         if (senderNick == "BanchoBot")
@@ -104,21 +109,26 @@ public partial class AutoRef
         
         if (content == "PING")
         {
-            await client.SendPrivateMessageAsync(lobbyChannelName,"pong");
+            await client.SendPrivateMessageAsync(LobbyChannelName,"pong");
         }
+    }
+
+    public async Task SendMessageFromDiscord(string content)
+    {
+        await client.SendPrivateMessageAsync(LobbyChannelName, content);
     }
 
     private async Task InitializeLobbySettings()
     {
-        await client.SendPrivateMessageAsync(lobbyChannelName,"!mp set 2 3 2");
-        await client.SendPrivateMessageAsync(lobbyChannelName, "!mp invite " + currentMatch.Referee.Name);
+        await client.SendPrivateMessageAsync(LobbyChannelName,"!mp set 2 3 2");
+        await client.SendPrivateMessageAsync(LobbyChannelName, "!mp invite " + currentMatch.Referee.Name);
         //TODO addrefs streamers
     }
 
     private async Task PrintScore()
     {
         string scoreMsg = $"{currentMatch.TeamRed.DisplayName} {matchScore[0]} -- {matchScore[1]} {currentMatch.TeamBlue.DisplayName}";
-        await client.SendPrivateMessageAsync(lobbyChannelName, scoreMsg);
+        await client.SendPrivateMessageAsync(LobbyChannelName, scoreMsg);
     }
 
     private async Task ExecuteAdminCommand(string[] args)
@@ -127,15 +137,15 @@ public partial class AutoRef
         {
             case "auto":
                 auto = args.Length > 1 && args[1] == "on";
-                await client.SendPrivateMessageAsync(lobbyChannelName, $"Auto-Ref status: {(auto ? "ENABLED" : "DISABLED")}");
+                await client.SendPrivateMessageAsync(LobbyChannelName, $"Auto-Ref status: {(auto ? "ENABLED" : "DISABLED")}");
                 break;
             case "close":
-                await client.SendPrivateMessageAsync(lobbyChannelName, "!mp close");
+                await client.SendPrivateMessageAsync(LobbyChannelName, "!mp close");
                 await client.DisconnectAsync();
                 break;
             case "invite":
-                await client.SendPrivateMessageAsync(lobbyChannelName, $"!mp invite {currentMatch.TeamRed.DisplayName}");
-                await client.SendPrivateMessageAsync(lobbyChannelName, $"!mp invite {currentMatch.TeamBlue.DisplayName}");
+                await client.SendPrivateMessageAsync(LobbyChannelName, $"!mp invite {currentMatch.TeamRed.DisplayName}");
+                await client.SendPrivateMessageAsync(LobbyChannelName, $"!mp invite {currentMatch.TeamBlue.DisplayName}");
                 break;
         }
     }
