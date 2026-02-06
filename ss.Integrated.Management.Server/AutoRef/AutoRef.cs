@@ -104,16 +104,14 @@ public partial class AutoRef
         switch (senderNick)
         {
             case "BanchoBot" when content.Contains("Created the tournament match"):
-                {
-                    var parts = content.Split('/');
-                    var idPart = parts.Last().Split(' ')[0];
-                    LobbyChannelName = $"#mp_{idPart}";
+                var parts = content.Split('/');
+                var idPart = parts.Last().Split(' ')[0];
+                LobbyChannelName = $"#mp_{idPart}";
 
-                    await client.JoinChannelAsync(LobbyChannelName);
-                    await InitializeLobbySettings();
-                    joined = true;
-                    return;
-                }
+                await client.JoinChannelAsync(LobbyChannelName);
+                await InitializeLobbySettings();
+                joined = true;
+                return;
             case "BanchoBot" when content.Contains("Closed the match"):
                 await client.DisconnectAsync();
                 break;
