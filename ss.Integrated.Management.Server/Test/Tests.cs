@@ -14,8 +14,8 @@ namespace ss.Integrated.Management.Server
             Console.WriteLine("--- Iniciando Seed ---");
 
             // 1. Crear Osu Users (Cache)
-            var osuUser1 = new Models.OsuUser { Id = 727, DisplayName = "Team1" };
-            var osuUser2 = new Models.OsuUser { Id = 12431, DisplayName = "Team2" };
+            var osuUser1 = new Models.OsuUser { Id = 727, DisplayName = "Qualifiers" };
+            var osuUser2 = new Models.OsuUser { Id = 12431, DisplayName = "A4" };
 
             if (!db.Set<Models.OsuUser>().Any())
             {
@@ -49,7 +49,13 @@ namespace ss.Integrated.Management.Server
                 DisplayName = "Finals",
                 BestOf = 7,
                 Mode = Models.BansType.SpanishShowdown,
-                MapPool = new List<Models.RoundBeatmap> { new() { BeatmapID = 100, slot = "NM1" } }
+                MapPool = new List<Models.RoundBeatmap> 
+                { 
+                    new() { BeatmapID = 1453229, Slot = "NM1" },
+                    new() { BeatmapID = 1453229, Slot = "HD1" },
+                    new() { BeatmapID = 1453229, Slot = "HR1" },
+                    new() { BeatmapID = 1453229, Slot = "DT1" },
+                },
             };
 
             if (!db.Set<Models.Round>().Any())
@@ -62,8 +68,8 @@ namespace ss.Integrated.Management.Server
             // Aquí es donde "congelamos" los datos de las tablas en el JSON del partido
             var match = new Models.Match
             {
-                Id = "MATCH_TEST_05",
-                Type = (int)Models.MatchType.EliminationStage,
+                Id = "A5",
+                Type = (int)Models.MatchType.QualifiersStage,
                 StartTime = DateTime.UtcNow,
 
                 // CONVERTIR ENTIDAD -> SNAPSHOT
@@ -113,7 +119,7 @@ namespace ss.Integrated.Management.Server
             }
 
             // LEER PARA COMPROBAR
-            var savedMatch = await db.Matches.FirstOrDefaultAsync(x => x.Id == "MATCH_TEST_05" );
+            var savedMatch = await db.Matches.FirstOrDefaultAsync(x => x.Id == "A4" );
             Console.WriteLine($"Leído de DB -> Red: {savedMatch.TeamRed.DisplayName} vs Blue: {savedMatch.TeamBlue.DisplayName}");
         }
     }

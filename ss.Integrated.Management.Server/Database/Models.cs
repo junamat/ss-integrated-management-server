@@ -134,7 +134,7 @@ public class Models
     public class RoundBeatmap
     {
         public int BeatmapID { get; set; }
-        public string slot { get; set; }
+        public string Slot { get; set; }
     }
 
     public enum BansType

@@ -11,7 +11,7 @@ public class MatchCommands : InteractionModuleBase<SocketInteractionContext>
     
     [RequireFromEnvId("DISCORD_REFEREE_ROLE_ID")]
     [SlashCommand("startref", "Inicia un nuevo match y crea su canal")]
-    public async Task StartRefAsync(string matchId, string referee, int type)
+    public async Task StartRefAsync(string matchId, string referee)
     {
         await DeferAsync(ephemeral: false);
 

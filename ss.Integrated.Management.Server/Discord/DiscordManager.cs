@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 using System.Reflection;
+using ss.Integrated.Management.Server;
 using ss.Internal.Management.Server.AutoRef;
 
 namespace ss.Internal.Management.Server.Discord;
@@ -99,7 +100,7 @@ public class DiscordManager
 
         activeChannels.TryAdd(matchId, newChannel.Id);
 
-        var worker = new AutoRef.AutoRef(matchId, referee, Models.MatchType.EliminationStage, HandleMatchIRCMessage); // TODO la stage la debería sacar de la db
+        var worker = new AutoRef.AutoRef(matchId, referee, HandleMatchIRCMessage);
         activeMatches.TryAdd(matchId, worker);
 
         await newChannel.SendMessageAsync($"Canal creado para Referee: **{referee}**. Iniciando worker...");
@@ -136,22 +137,31 @@ public class DiscordManager
 
     public Task AddRefereeToDbAsync(Models.RefereeInfo model)
     {
-        // TODO
+        // TODOD
         return Task.CompletedTask;
     }
 
     private async Task HandleMessageAsync(SocketMessage message)
     {
-        if(message.Author.IsBot) return;
+        if(message.Author.IsBot || message.Attachments.Count > 0 || message.Stickers.Count > 0) return;
         
         foreach (var channelid in activeChannels.Values)
         {
             if (message.Channel.Id == channelid)
             {
+                var msgToIRC = message.Content;
+                if (!message.Content.StartsWith("!")) msgToIRC = $"[DISCORD | {message.Author.Username}] {message.Content}";
+                
                 // Busca la instancia de autoref asociada al canal al que se envia el mensaje
                 var key = activeChannels.FirstOrDefault(m => m.Value == channelid).Key;
-                await activeMatches.GetValueOrDefault(key)!.SendMessageFromDiscord(message.Content);
+                await activeMatches.GetValueOrDefault(key)!.SendMessageFromDiscord(msgToIRC);
             }
+        }
+
+        if (message.Content == "!testfill")
+        {
+            await Tests.TestFill();
+            await message.Channel.SendMessageAsync("Sample database filled.");
         }
     }
     
