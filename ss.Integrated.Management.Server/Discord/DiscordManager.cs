@@ -137,7 +137,9 @@ public class DiscordManager
 
     public Task AddRefereeToDbAsync(Models.RefereeInfo model)
     {
-        // TODOD
+        using var db = new ModelsContext();
+        db.Referees.Add(model);
+        db.SaveChangesAsync();
         return Task.CompletedTask;
     }
 

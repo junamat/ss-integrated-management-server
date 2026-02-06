@@ -24,8 +24,8 @@ namespace ss.Integrated.Management.Server
             }
 
             // 2. Crear Usuarios de App (TeamInfo)
-            var team1 = new Models.TeamInfo { Id = Guid.NewGuid().ToString(), OsuID = 727, DiscordID = "D_1" };
-            var team2 = new Models.TeamInfo { Id = Guid.NewGuid().ToString(), OsuID = 12431, DiscordID = "D_2" };
+            var team1 = new Models.TeamInfo { Id = Guid.NewGuid().ToString(), OsuID = 727, DiscordID = 234547235647 };
+            var team2 = new Models.TeamInfo { Id = Guid.NewGuid().ToString(), OsuID = 12431, DiscordID = 348756234 };
 
             if (!db.Set<Models.TeamInfo>().Any())
             {

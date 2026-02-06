@@ -67,7 +67,7 @@ public class Models
         public int OsuID { get; set; }
         
         [Column("discord_id")]
-        public string DiscordID { get; set; }
+        public ulong DiscordID { get; set; }
         
         [ForeignKey("OsuID")]
         public virtual OsuUser OsuData { get; set; }
@@ -97,7 +97,7 @@ public class Models
         public string DisplayName { get; set; }
         
         [Column("discord_id")]
-        public int DiscordID { get; set; }
+        public ulong DiscordID { get; set; }
         
         [Column("osu_id")]
         public int OsuID { get; set; }
@@ -110,7 +110,7 @@ public class Models
     {
         public string Id { get; set; }
         public int OsuID { get; set; }
-        public string DiscordID { get; set; }
+        public ulong DiscordID { get; set; }
         public string DisplayName { get; set; }
     }
 
