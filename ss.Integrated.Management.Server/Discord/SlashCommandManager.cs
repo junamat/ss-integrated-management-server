@@ -13,7 +13,7 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
     
     [RequireFromEnvId("DISCORD_REFEREE_ROLE_ID")]
     [SlashCommand("startref", "Inicia un nuevo match y crea su canal")]
-    public async Task StartRefAsync(string matchId, string referee)
+    public async Task StartRefAsync(string matchId, string referee, Models.MatchType matchType)
     {
         await DeferAsync(ephemeral: false);
 
@@ -21,7 +21,7 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
 
         if (await db.Referees.FirstOrDefaultAsync(r => r.DisplayName == referee) != null)
         {
-            bool created = await Manager.CreateMatchEnvironmentAsync(matchId, referee, Context.Guild);
+            bool created = await Manager.CreateMatchEnvironmentAsync(matchId, referee, Context.Guild, matchType);
 
             if (created)
                 await FollowupAsync($"Match **{matchId}** iniciado correctamente.");

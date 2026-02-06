@@ -23,7 +23,7 @@ public class DiscordManager
     // activeChannels => <match_id, channel_id>
     // activeMatches  => <match_id, autoref_instance>
     private ConcurrentDictionary<string, ulong> activeChannels = new();
-    private ConcurrentDictionary<string, AutoRef.AutoRef> activeMatches = new();
+    private ConcurrentDictionary<string, IAutoRef> activeMatches = new();
 
     public DiscordManager(string token)
     {
@@ -89,7 +89,7 @@ public class DiscordManager
         }
     }
 
-    public async Task<bool> CreateMatchEnvironmentAsync(string matchId, string referee, IGuild guild)
+    public async Task<bool> CreateMatchEnvironmentAsync(string matchId, string referee, IGuild guild, Models.MatchType type)
     {
         if (activeMatches.ContainsKey(matchId)) return false; // Ya existe
 
@@ -101,8 +101,10 @@ public class DiscordManager
 
         activeChannels.TryAdd(matchId, newChannel.Id);
 
-
-        var worker = new AutoRef.AutoRef(matchId, referee, HandleMatchIRCMessage);
+        IAutoRef worker = type == Models.MatchType.QualifiersStage
+            ? new AutoRefQualifiersStage(matchId, referee, HandleMatchIRCMessage)
+            : new AutoRefEliminationStage(matchId, referee, HandleMatchIRCMessage);
+        
         activeMatches.TryAdd(matchId, worker);
 
         await newChannel.SendMessageAsync($"Canal creado para Referee: **{referee}**. Iniciando worker...");

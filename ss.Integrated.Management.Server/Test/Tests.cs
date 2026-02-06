@@ -65,10 +65,9 @@ namespace ss.Integrated.Management.Server
             }
 
             // 4. CREAR EL MATCH
-            var match = new Models.Match
+            var match = new Models.MatchRoom
             {
                 Id = "A6",
-                Type = Models.MatchType.QualifiersStage,
                 StartTime = DateTime.UtcNow,
                 TeamRedId = team1.Id,
                 TeamBlueId = team2.Id,
@@ -76,9 +75,9 @@ namespace ss.Integrated.Management.Server
                 RefereeId = null,
             };
 
-            if (!await db.Matches.AnyAsync(m => m.Id == match.Id))
+            if (!await db.MatchRooms.AnyAsync(m => m.Id == match.Id))
             {
-                db.Matches.Add(match);
+                db.MatchRooms.Add(match);
                 await db.SaveChangesAsync();
                 Console.WriteLine("Match creado exitosamente.");
             }
@@ -88,7 +87,7 @@ namespace ss.Integrated.Management.Server
             }
 
             // LEER PARA COMPROBAR
-            var savedMatch = await db.Matches.FirstOrDefaultAsync(x => x.Id == "A5");
+            var savedMatch = await db.MatchRooms.FirstOrDefaultAsync(x => x.Id == "A5");
             if (savedMatch != null)
             {
                 Console.WriteLine($"Leído de DB -> Red: {savedMatch.TeamRed.DisplayName} vs Blue: {savedMatch.TeamBlue.DisplayName}");

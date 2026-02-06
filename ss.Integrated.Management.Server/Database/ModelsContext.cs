@@ -4,12 +4,17 @@ namespace ss.Internal.Management.Server.AutoRef;
 
 public class ModelsContext : DbContext
 {
-    public DbSet<Models.Match> Matches { get; set; }
+    public DbSet<Models.MatchRoom> MatchRooms { get; set; }
     public DbSet<Models.RefereeInfo> Referees { get; set; }
+    public DbSet<Models.QualifierRoom> QualifierRooms { get; set; }
+    public DbSet<Models.PlayerInfo> Players { get; set; }
+    public DbSet<Models.TeamInfo> Users { get; set; }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING") ?? throw new InvalidOperationException());
+        //optionsBuilder.UseNpgsql("Host=localhost;Database=ss;Username=ss;Password=ss;");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -25,10 +30,16 @@ public class ModelsContext : DbContext
         //   //entity.ToTable("matches");
         //   entity.ToTable("matches", t => t.ExcludeFromMigrations());
         //
-        // Hay 5 de estos casos, asegúrate de revisarlos todos antes de nada.
+        // Hay 7 de estos casos, asegúrate de revisarlos todos antes de nada.
 
-        modelBuilder.Entity<Models.Match>().ToTable("matches");
-        //modelBuilder.Entity<Models.Match>().ToTable("matches", t => t.ExcludeFromMigrations());
+        modelBuilder.Entity<Models.MatchRoom>().ToTable("match_rooms");
+        //modelBuilder.Entity<Models.MatchRoom>().ToTable("match_rooms", t => t.ExcludeFromMigrations());
+        
+        modelBuilder.Entity<Models.QualifierRoom>().ToTable("qualifier_rooms");
+        //modelBuilder.Entity<Models.QualifierRoom>().ToTable("qualifier_rooms", t => t.ExcludeFromMigrations());
+        
+        modelBuilder.Entity<Models.PlayerInfo>().ToTable("player");
+        //modelBuilder.Entity<Models.PlayerInfo>().ToTable("player", t => t.ExcludeFromMigrations());
 
         modelBuilder.Entity<Models.TeamInfo>(e =>
         {

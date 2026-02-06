@@ -4,34 +4,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ss.Internal.Management.Server.AutoRef;
 
-public partial class AutoRef
+public partial class AutoRefQualifiersStage : IAutoRef
 {
-    private Models.Match? currentMatch;
+    private Models.QualifierRoom? currentMatch;
     private readonly string matchId;
     private readonly string refDisplayName;
 
     private IBanchoClient? client;
-    public string? LobbyChannelName;
+    private string? lobbyChannelName;
+    
+    private bool joined;
 
-    private int[] matchScore = [0, 0];
-    private bool auto = false;
-    private bool joined = false;
-
-    private TeamColor firstPick;
-    private TeamColor firstBan;
-
-    private int currentMapIndex = 0; // Esto solo se usa en Qualifiers
+    private int currentMapIndex;
     private MatchState state;
 
     private TaskCompletionSource<string>? chatResponseTcs;
 
     private readonly Action<string, string> msgCallback;
-
-    public enum TeamColor
-    {
-        TeamBlue,
-        TeamRed
-    }
 
     public enum MatchState
     {
@@ -42,7 +31,7 @@ public partial class AutoRef
         MatchOnHold,
     }
 
-    public AutoRef(string matchId, string refDisplayName, Action<string, string> msgCallback)
+    public AutoRefQualifiersStage(string matchId, string refDisplayName, Action<string, string> msgCallback)
     {
         this.matchId = matchId;
         this.refDisplayName = refDisplayName;
@@ -51,19 +40,24 @@ public partial class AutoRef
 
     public async Task StartAsync()
     {
-        using (var db = new ModelsContext())
+        await using (var db = new ModelsContext())
         {
-            currentMatch = await db.Matches.FirstAsync(m => m.Id == matchId) ?? throw new Exception("Match no encontrado en DB");
+            currentMatch = await db.QualifierRooms.FirstAsync(m => m.Id == matchId) ?? throw new Exception("Match no encontrado en DB");
             currentMatch.Referee = await db.Referees.FirstAsync(r => r.DisplayName == refDisplayName) ?? throw new Exception("Referee no encontrado en DB");
         }
 
         await ConnectToBancho();
     }
 
+    public Task StopAsync()
+    {
+        throw new NotImplementedException();
+    }
+
     private async Task ConnectToBancho()
     {
         var config = new BanchoClientConfig(
-            new IrcCredentials(currentMatch.Referee.DisplayName, currentMatch.Referee.IRC)
+            new IrcCredentials(currentMatch!.Referee.DisplayName, currentMatch.Referee.IRC)
         );
 
         client = new BanchoClient(config);
@@ -86,7 +80,7 @@ public partial class AutoRef
         string prefix = msg.Prefix.StartsWith(":") ? msg.Prefix[1..] : msg.Prefix;
         string senderNick = prefix.Contains('!') ? prefix.Split('!')[0] : prefix;
 
-        string target = msg.Parameters[0];
+        //string target = msg.Parameters[0];
         string content = msg.Parameters[1];
 
         Console.WriteLine($"{senderNick}: {content}");
@@ -98,14 +92,14 @@ public partial class AutoRef
             case "BanchoBot" when content.Contains("Created the tournament match"):
                 var parts = content.Split('/');
                 var idPart = parts.Last().Split(' ')[0];
-                LobbyChannelName = $"#mp_{idPart}";
+                lobbyChannelName = $"#mp_{idPart}";
 
-                await client.JoinChannelAsync(LobbyChannelName);
+                await client!.JoinChannelAsync(lobbyChannelName);
                 await InitializeLobbySettings();
                 joined = true;
                 return;
             case "BanchoBot" when content.Contains("Closed the match"):
-                await client.DisconnectAsync();
+                await client!.DisconnectAsync();
                 break;
             case "BanchoBot" when chatResponseTcs != null && SearchKeywords(content):
                 chatResponseTcs.TrySetResult(content);
@@ -113,14 +107,14 @@ public partial class AutoRef
                 break;
         }
 
-        if (senderNick == "BanchoBot") TryStateChange(content);
+        if (senderNick == "BanchoBot") _ = TryStateChange(content);
 
         // REGIÓN DEDICADA AL !PANIC. ESTÁ DESACOPLADA DEL RESTO POR SER UN CASO DE EMERGENCIA
         // QUE NO DEBERÍA CAER EN NINGUNA OTRA SUBRUTINA
 
         if (content.Contains("!panic_over"))
         {
-            await SendMessageBothWays($"Going back to auto mode. Starting soon...");
+            await SendMessageBothWays("Going back to auto mode. Starting soon...");
             state = MatchState.WaitingForStart;
             await SendMessageBothWays("!mp timer 10");
         }
@@ -128,7 +122,9 @@ public partial class AutoRef
         {
             state = MatchState.MatchOnHold;
             await SendMessageBothWays("!mp aborttimer");
-            await SendMessageBothWays($"<@&{Environment.GetEnvironmentVariable("DISCORD_REFEREE_ROLE_ID")}>, {senderNick} has requested human intervention. Auto mode has been disabled, resume it with !panic_over");
+
+            await SendMessageBothWays(
+                $"<@&{Environment.GetEnvironmentVariable("DISCORD_REFEREE_ROLE_ID")}>, {senderNick} has requested human intervention. Auto mode has been disabled, resume it with !panic_over");
         }
 
         if (content.StartsWith('>'))
@@ -139,28 +135,13 @@ public partial class AutoRef
 
     public async Task SendMessageFromDiscord(string content)
     {
-        await client.SendPrivateMessageAsync(LobbyChannelName, content);
+        await client!.SendPrivateMessageAsync(lobbyChannelName!, content);
     }
 
     private async Task InitializeLobbySettings()
     {
-        if (currentMatch.Type == Models.MatchType.QualifiersStage)
-        {
-            await client.SendPrivateMessageAsync(LobbyChannelName, "!mp set 0 3 16");
-        }
-        else
-        {
-            await client.SendPrivateMessageAsync(LobbyChannelName, "!mp set 2 3 3");
-        }
-
-        await client.SendPrivateMessageAsync(LobbyChannelName, "!mp invite " + currentMatch.Referee.DisplayName);
-        //TODO addrefs streamers
-    }
-
-    private async Task PrintScore()
-    {
-        string scoreMsg = $"{currentMatch.TeamRed.DisplayName} {matchScore[0]} -- {matchScore[1]} {currentMatch.TeamBlue.DisplayName}";
-        await client.SendPrivateMessageAsync(LobbyChannelName, scoreMsg);
+        await client!.SendPrivateMessageAsync(lobbyChannelName!, "!mp set 0 3 16");
+        await client!.SendPrivateMessageAsync(lobbyChannelName!, "!mp invite " + currentMatch!.Referee.DisplayName);
     }
 
     private async Task ExecuteAdminCommand(string[] args)
@@ -173,80 +154,55 @@ public partial class AutoRef
                 await SendMessageBothWays("!mp close");
                 break;
             case "invite":
-                await SendMessageBothWays($"!mp invite {currentMatch.TeamRed.DisplayName}");
-                await SendMessageBothWays($"!mp invite {currentMatch.TeamBlue.DisplayName}");
+                //TODO
                 break;
             case "start":
-                if (currentMatch.Type == Models.MatchType.QualifiersStage)
-                {
-                    await SendMessageBothWays($"Engaging autoreferee mode for Qualifiers, Lobby {currentMatch.Id}. Use '!panic' if you need human intervention and a referee will get back to you ASAP");
-                    StartQualifiersFlow();
-                }
-                else
-                {
-                    await SendMessageBothWays($"Engaging autoreferee mode for Elimination Stage, Lobby {currentMatch.Id}");
-                }
+                await SendMessageBothWays(
+                    $"Engaging autoreferee mode for Qualifiers, Lobby {currentMatch!.Id}. Use '!panic' if you need human intervention and a referee will get back to you ASAP");
+                _ = StartQualifiersFlow();
                 break;
         }
     }
 
     private async Task SendMessageBothWays(string content)
     {
-        await client.SendPrivateMessageAsync(LobbyChannelName, content);
-        msgCallback(matchId, $"**[AUTO | {currentMatch.Referee.DisplayName}]** {content}");
-    }
-
-    private async Task WaitForResponseAsync(string keyword)
-    {
-        chatResponseTcs = new TaskCompletionSource<string>();
-
-        var ct = new CancellationTokenSource(TimeSpan.FromMinutes(2)).Token;
-        using (ct.Register(() => chatResponseTcs.TrySetCanceled()))
-        {
-            await chatResponseTcs.Task;
-        }
+        await client!.SendPrivateMessageAsync(lobbyChannelName!, content);
+        msgCallback(matchId, $"**[AUTO | {currentMatch!.Referee.DisplayName}]** {content}");
     }
 
     private bool SearchKeywords(string content)
     {
-        bool found = false;
-
-        switch (content)
+        bool found = content switch
         {
-            case var s when s.Contains("All players are ready"):
-                found = true;
-                break;
-            case var s when s.Contains("Changed beatmap"):
-                found = true;
-                break;
-            case var s when s.Contains("Enabled"):
-                found = true;
-                break;
-            case var s when s.Contains("Countdown finished"):
-                found = true;
-                break;
-        }
+            var s when s.Contains("All players are ready") => true,
+            var s when s.Contains("Changed beatmap") => true,
+            var s when s.Contains("Enabled") => true,
+            var s when s.Contains("Countdown finished") => true,
+            _ => false
+        };
 
         return found;
     }
 
     private async Task TryStateChange(string banchoMsg) // transiciones de estado
     {
-        if (state == MatchState.Idle) return;
+        switch (state)
+        {
+            case MatchState.Idle:
+                return;
+            case MatchState.WaitingForStart:
+            {
+                if (banchoMsg.Contains("All players are ready") || banchoMsg.Contains("Countdown finished"))
+                {
+                    await SendMessageBothWays("!mp start 10");
+                    state = MatchState.Playing;
+                }
 
-        if (state == MatchState.WaitingForStart)
-        {
-            if (banchoMsg.Contains("All players are ready") || banchoMsg.Contains("Countdown finished"))
-            {
-                await SendMessageBothWays("!mp start 10");
-                state = MatchState.Playing;
+                break;
             }
-        }
-        else if (state == MatchState.Playing)
-        {
-            if (banchoMsg.Contains("The match has finished"))
+            case MatchState.Playing:
             {
-                if (currentMatch.Type == Models.MatchType.QualifiersStage)
+                if (banchoMsg.Contains("The match has finished"))
                 {
                     currentMapIndex++;
                     state = MatchState.Idle;
@@ -256,14 +212,9 @@ public partial class AutoRef
                         await Task.Delay(10000);
                         await PrepareNextQualifierMap();
                     });
-
-                }
-                else // Elimination Stage
-                {
-                    //TODO enseñar scores
-                    state = MatchState.Idle;
                 }
 
+                break;
             }
         }
     }
@@ -277,7 +228,7 @@ public partial class AutoRef
 
     private async Task PrepareNextQualifierMap()
     {
-        if (currentMapIndex >= currentMatch.Round.MapPool.Count)
+        if (currentMapIndex >= currentMatch!.Round.MapPool.Count)
         {
             await SendMessageBothWays("Qualifiers lobby finished. Thank you for playing!");
             state = MatchState.MatchFinished;

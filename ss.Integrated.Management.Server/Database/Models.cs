@@ -5,15 +5,12 @@ namespace ss.Internal.Management.Server.AutoRef;
 
 public class Models
 {
-    [Table("matches")]
-    public class Match
+    [Table("match_rooms")]
+    public class MatchRoom
     {
         [Key]
         [Column("id")]
         public string Id { get; set; }
-
-        [Column("match_type")]
-        public MatchType Type { get; set; }
 
         [Column("round_id")]
         public int RoundId { get; set; }
@@ -44,6 +41,39 @@ public class Models
 
         [ForeignKey("RefereeId")]
         public virtual RefereeInfo Referee { get; set; }
+    }
+
+    [Table("qualifier_rooms")]
+    public class QualifierRoom
+    {
+        [Key]
+        [Column("id")]
+        public string Id { get; set; }
+        
+        [Column("start_time")]
+        public DateTime StartTime { get; set; }
+        
+        [Column("referee_id")]
+        public int? RefereeId { get; set; }
+        
+        [Column("round_id")]
+        public int RoundId { get; set; }
+        
+        [Column("requested_by")]
+        public TeamInfo? RequestedBy { get; set; }
+        
+        [Column("is_approved")]
+        public bool Approved { get; set; }
+        
+        [ForeignKey("RefereeId")]
+        public virtual RefereeInfo Referee { get; set; }
+
+        [ForeignKey("RoundId")]
+        public virtual Round Round { get; set; }
+
+        [ForeignKey("RequestedBy")]
+        public virtual TeamInfo RequestUser { get; set; }
+
     }
 
     [Table("rounds")]
@@ -87,6 +117,20 @@ public class Models
 
         [NotMapped]
         public string DisplayName => OsuData.DisplayName ?? "Desconocido";
+    }
+
+    [Table("player")]
+    public class PlayerInfo
+    {
+        [Key]
+        [Column("id")]
+        public int Id { get; set; }
+        
+        [Column("qualifier_room_id")]
+        public string QualifiersRoom { get; set; }
+        
+        [ForeignKey("Id")]
+        public TeamInfo User { get; set; }
     }
 
     [Table("osu_users")]
