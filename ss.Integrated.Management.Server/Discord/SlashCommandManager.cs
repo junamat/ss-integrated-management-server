@@ -5,7 +5,7 @@ using ss.Internal.Management.Server.AutoRef;
 
 namespace ss.Internal.Management.Server.Discord;
 
-public class MatchCommands : InteractionModuleBase<SocketInteractionContext>
+public class SlashCommandManager : InteractionModuleBase<SocketInteractionContext>
 {
     public DiscordManager Manager { get; set; }
     
@@ -33,8 +33,8 @@ public class MatchCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [RequireFromEnvId("DISCORD_REFEREE_ROLE_ID")]
-    [SlashCommand("addref", "Añade un referee a la base de datos")]
-    public async Task AddRefAsync(string nombre, int osuId, string ircPass)
+    [SlashCommand("linkirc", "Configura tus credenciales de IRC para hacer uso del bot")]
+    public async Task AddRefCredentialsAsync(string nombre, int osuId, string ircPass)
     {
         ulong discordId = Context.User.Id;
         var model = new Models.RefereeInfo
@@ -42,7 +42,7 @@ public class MatchCommands : InteractionModuleBase<SocketInteractionContext>
             DisplayName = nombre,
             OsuID = osuId,
             IRC = ircPass,
-            DiscordID = (int)discordId
+            DiscordID = discordId
         };
         
         await Manager.AddRefereeToDbAsync(model);
