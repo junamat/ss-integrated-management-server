@@ -2,7 +2,7 @@
 using BanchoSharp;
 using BanchoSharp.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using ss.Internal.Management.Server.Resources;
+using ss.Internal.Management.Server.Localization;
 
 namespace ss.Internal.Management.Server.AutoRef;
 
@@ -172,7 +172,7 @@ public partial class AutoRefEliminationStage : IAutoRef
 
         if (content.Contains("!panic_over"))
         {
-            await SendMessageBothWays(Strings.BackToAuto);
+            await SendMessageBothWays(I18n.T("BackToAuto"));
             state = MatchState.WaitingForStart;
             await SendMessageBothWays("!mp timer 10");
         }
@@ -181,8 +181,7 @@ public partial class AutoRefEliminationStage : IAutoRef
             state = MatchState.MatchOnHold;
             await SendMessageBothWays("!mp aborttimer");
 
-            await SendMessageBothWays(
-                string.Format(Strings.Panic, Environment.GetEnvironmentVariable("DISCORD_REFEREE_ROLE_ID"), senderNick));
+            await SendMessageBothWays(I18n.T("Panic", Environment.GetEnvironmentVariable("DISCORD_REFEREE_ROLE_ID"), senderNick));
         }
 
         _ = TryStateChange(senderNick, content);
@@ -220,12 +219,12 @@ public partial class AutoRefEliminationStage : IAutoRef
         if (redTotal > blueTotal)
         {
             matchScore[0]++;
-            await SendMessageBothWays(string.Format(Strings.RedWins, redTotal, blueTotal));
+            await SendMessageBothWays(I18n.T("RedWins", redTotal, blueTotal));
         }
         else
         {
             matchScore[1]++;
-            await SendMessageBothWays(string.Format(Strings.BlueWins, blueTotal, redTotal));
+            await SendMessageBothWays(I18n.T("BlueWins", blueTotal, redTotal));
         }
         
         currentMapScores.Clear();
@@ -256,11 +255,11 @@ public partial class AutoRefEliminationStage : IAutoRef
             case "start":
                 if (firstPick == TeamColor.None || firstBan == TeamColor.None)
                 {
-                    await SendMessageFromDiscord(Strings.PropertiesNotInit);
+                    await SendMessageFromDiscord(I18n.T("PropertiesNotInit"));
                     return;
                 }
 
-                await SendMessageBothWays(string.Format(Strings.EngagingAuto, currentMatch!.Id));
+                await SendMessageBothWays(I18n.T("EngagingAuto", currentMatch!.Id));
                 state = MatchState.BanPhaseStart;
                 auto = true;
                 break;
@@ -269,11 +268,11 @@ public partial class AutoRefEliminationStage : IAutoRef
                 if (args.Length > 1)
                 {
                     firstPick = args[1] == "red" ? TeamColor.TeamRed : TeamColor.TeamBlue;
-                    await SendMessageBothWays(Strings.SuccessfulFirstPick);
+                    await SendMessageBothWays(I18n.T("SuccessfulFirstPick"));
                 }
                 else
                 {
-                    await SendMessageBothWays(Strings.NotEnoughArgs);
+                    await SendMessageBothWays(I18n.T("NotEnoughArgs"));
                 }
 
                 break;
@@ -282,25 +281,25 @@ public partial class AutoRefEliminationStage : IAutoRef
                 if (args.Length > 1)
                 {
                     firstBan = args[1] == "red" ? TeamColor.TeamRed : TeamColor.TeamBlue;
-                    await SendMessageBothWays(Strings.SuccessfulFirstBan);
+                    await SendMessageBothWays(I18n.T("SuccessfulFirstBan"));
                 }
                 else
                 {
-                    await SendMessageBothWays(Strings.NotEnoughArgs);
+                    await SendMessageBothWays(I18n.T("NotEnoughArgs"));
                 }
 
                 break;
-        }
-    }
+         }
+     }
 
-    private async Task SendMessageBothWays(string content)
-    {
-        await client!.SendPrivateMessageAsync(lobbyChannelName!, content);
-        msgCallback(matchId, $"**[AUTO | {currentMatch!.Referee.DisplayName}]** {content}");
-    }
+     private async Task SendMessageBothWays(string content)
+     {
+         await client!.SendPrivateMessageAsync(lobbyChannelName!, content);
+         msgCallback(matchId, $"**[AUTO | {currentMatch!.Referee.DisplayName}]** {content}");
+     }
 
-    private async Task WaitForResponseAsync(string keyword)
-    {
+     private async Task WaitForResponseAsync(string keyword)
+     {
         chatResponseTcs = new TaskCompletionSource<string>();
 
         var ct = new CancellationTokenSource(TimeSpan.FromMinutes(2)).Token;
@@ -348,105 +347,105 @@ public partial class AutoRefEliminationStage : IAutoRef
         {
             if (firstBan == TeamColor.TeamRed)
             {
-                await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamRed.DisplayName));
+                await SendMessageBothWays(I18n.T("BanCall", currentMatch!.TeamRed.DisplayName));
                 state = MatchState.WaitingForBanRed;
             }
             else
             {
-                await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamBlue.DisplayName));
+                await SendMessageBothWays(I18n.T("BanCall", currentMatch!.TeamBlue.DisplayName));
                 state = MatchState.WaitingForBanBlue;
             }
-        }
+         }
 
-        if (state == MatchState.WaitingForBanRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ','_'))
-        {
-            if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
-            {
-                bannedMaps.Add(new Models.RoundChoice { Slot = content.ToUpper(), TeamColor = Models.TeamColor.TeamRed });
-                await SendMessageBothWays(string.Format(Strings.RedBanned, content.ToUpper()));
-                await Task.Delay(250);
-                repeat--;
+         if (state == MatchState.WaitingForBanRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ','_'))
+         {
+             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
+             {
+                 bannedMaps.Add(new Models.RoundChoice { Slot = content.ToUpper(), TeamColor = Models.TeamColor.TeamRed });
+                 await SendMessageBothWays(I18n.T("RedBanned", content.ToUpper()));
+                 await Task.Delay(250);
+                 repeat--;
 
-                if (repeat == 0)
-                {
+                 if (repeat == 0)
+                 {
                     state = MatchState.PickPhaseStart;
                     repeat = 2;
-                }
-                else
-                {
+                 }
+                 else
+                 {
                     state = MatchState.WaitingForBanBlue;
-                    await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamBlue.DisplayName));
-                }
-                
-            }
-            
-            return;
-        }
+                    await SendMessageBothWays(I18n.T("BanCall", currentMatch!.TeamBlue.DisplayName));
+                 }
+                 
+             }
+             
+             return;
+         }
 
-        if (state == MatchState.WaitingForBanBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ','_'))
-        {
-            if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
-            {
-                bannedMaps.Add(new Models.RoundChoice { Slot = content.ToUpper(), TeamColor = Models.TeamColor.TeamBlue });
-                await SendMessageBothWays(string.Format(Strings.BlueBanned, content.ToUpper()));
-                await Task.Delay(250);
-                repeat--;
+         if (state == MatchState.WaitingForBanBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ','_'))
+         {
+             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
+             {
+                 bannedMaps.Add(new Models.RoundChoice { Slot = content.ToUpper(), TeamColor = Models.TeamColor.TeamBlue });
+                 await SendMessageBothWays(I18n.T("BlueBanned", content.ToUpper()));
+                 await Task.Delay(250);
+                 repeat--;
 
-                if (repeat == 0)
-                {
-                    state = MatchState.PickPhaseStart;
-                    repeat = 2;
-                }
-                else
-                {
-                    state = MatchState.WaitingForBanRed;
-                    await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamRed.DisplayName));
-                }
-            }
-            
-            return;
-        }
+                 if (repeat == 0)
+                 {
+                     state = MatchState.PickPhaseStart;
+                     repeat = 2;
+                 }
+                 else
+                 {
+                     state = MatchState.WaitingForBanRed;
+                     await SendMessageBothWays(I18n.T("BanCall", currentMatch!.TeamRed.DisplayName));
+                 }
+             }
+             
+             return;
+         }
 
-        #endregion
+         #endregion
 
-        #region PickPhaseRegion
+         #region PickPhaseRegion
 
-        if (state == MatchState.PickPhaseStart)
-        {
-            if (firstPick == TeamColor.TeamRed)
-            {
-                await SendMessageBothWays(string.Format(Strings.MatchWin, currentMatch!.TeamRed.DisplayName));
-                state = MatchState.WaitingForPickRed;
-            }
-            else
-            {
-                await SendMessageBothWays(string.Format(Strings.MatchWin, currentMatch!.TeamBlue.DisplayName));
-                state = MatchState.WaitingForPickBlue;
-            }
-        }
+         if (state == MatchState.PickPhaseStart)
+         {
+             if (firstPick == TeamColor.TeamRed)
+             {
+                 await SendMessageBothWays(I18n.T("MatchWin", currentMatch!.TeamRed.DisplayName));
+                 state = MatchState.WaitingForPickRed;
+             }
+             else
+             {
+                 await SendMessageBothWays(I18n.T("MatchWin", currentMatch!.TeamBlue.DisplayName));
+                 state = MatchState.WaitingForPickBlue;
+             }
+         }
 
         if (state == MatchState.WaitingForPickRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ','_'))
         {
             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
             {
                 pickedMaps.Add(new Models.RoundChoice { Slot = content.ToUpper(), TeamColor = Models.TeamColor.TeamRed });
-                await SendMessageBothWays(string.Format(Strings.RedPicked, content.ToUpper()));
+                await SendMessageBothWays(I18n.T("RedPicked", content.ToUpper()));
                 await PreparePick(content.ToUpper());
                 lastPick = TeamColor.TeamRed;
-            }
+             }
         }
         else if (state == MatchState.WaitingForPickBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ','_'))
         {
             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
             {
                 pickedMaps.Add(new Models.RoundChoice { Slot = content.ToUpper(), TeamColor = Models.TeamColor.TeamBlue });
-                await SendMessageBothWays(string.Format(Strings.BluePicked, content.ToUpper()));
+                await SendMessageBothWays(I18n.T("BluePicked", content.ToUpper()));
                 await PreparePick(content.ToUpper());
                 lastPick = TeamColor.TeamBlue;
-            }
-        }
+             }
+         }
 
-        #endregion
+         #endregion
         
         if (state == MatchState.WaitingForStart)
         {
@@ -464,7 +463,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 if (currentMatch!.Round.BanRounds == 2 && pickedMaps.Count == 4)
                 {
                     state = MatchState.BanPhaseStart;
-                    await SendMessageBothWays(Strings.SecondBanRound);
+                    await SendMessageBothWays(I18n.T("SecondBanRound"));
                 }
                 else
                 {
@@ -478,14 +477,14 @@ public partial class AutoRefEliminationStage : IAutoRef
 
                     if (redwin)
                     {
-                        await SendMessageBothWays(string.Format(Strings.MatchWin, currentMatch!.TeamRed.DisplayName));
+                        await SendMessageBothWays(I18n.T("MatchWin", currentMatch!.TeamRed.DisplayName));
                         state = MatchState.MatchFinished;
                         return;
                     }
 
                     if (bluewin)
                     {
-                        await SendMessageBothWays(string.Format(Strings.MatchWin, currentMatch!.TeamBlue.DisplayName));
+                        await SendMessageBothWays(I18n.T("MatchWin", currentMatch!.TeamBlue.DisplayName));
                         state = MatchState.MatchFinished;
                         return;
                     }
@@ -493,15 +492,15 @@ public partial class AutoRefEliminationStage : IAutoRef
                     if (lastPick == TeamColor.TeamRed)
                     {
                         state = MatchState.WaitingForPickBlue;
-                        await SendMessageBothWays(string.Format(Strings.PickCall, currentMatch!.TeamBlue.DisplayName));
-                    }
-                    else
-                    {
-                        state = MatchState.WaitingForPickRed;
-                        await SendMessageBothWays(string.Format(Strings.PickCall, currentMatch!.TeamRed.DisplayName));
-                    }
-                }
-            }
-        }
-    }
-}
+                        await SendMessageBothWays(I18n.T("PickCall", currentMatch!.TeamBlue.DisplayName));
+                     }
+                     else
+                     {
+                         state = MatchState.WaitingForPickRed;
+                         await SendMessageBothWays(I18n.T("PickCall", currentMatch!.TeamRed.DisplayName));
+                     }
+                 }
+             }
+         }
+     }
+ }
