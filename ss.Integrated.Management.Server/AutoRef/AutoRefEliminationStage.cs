@@ -232,7 +232,8 @@ public partial class AutoRefEliminationStage : IAutoRef
         }
 
         currentMapScores.Clear();
-        await SendMessageBothWays($"{currentMatch!.TeamRed.DisplayName} {matchScore[0]} - {matchScore[1]} {currentMatch!.TeamBlue.DisplayName}");
+        await SendMessageBothWays($"{currentMatch!.TeamRed.DisplayName} {matchScore[0]} - {matchScore[1]} {currentMatch!.TeamBlue.DisplayName} | Best of {currentMatch!.Round.BestOf}");
+        await Task.Delay(250);
     }
 
     private async Task ExecuteAdminCommand(string sender, string[] args)
