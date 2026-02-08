@@ -13,8 +13,8 @@ public class ModelsContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING") ?? throw new InvalidOperationException());
-        //optionsBuilder.UseNpgsql("Host=localhost;Database=ss;Username=ss;Password=ss;");
+        //optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING") ?? throw new InvalidOperationException());
+        optionsBuilder.UseNpgsql("Host=localhost;Database=ss;Username=ss;Password=ss;");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -32,8 +32,14 @@ public class ModelsContext : DbContext
         //
         // Hay 7 de estos casos, asegúrate de revisarlos todos antes de nada.
 
-        modelBuilder.Entity<Models.MatchRoom>().ToTable("match_rooms");
-        //modelBuilder.Entity<Models.MatchRoom>().ToTable("match_rooms", t => t.ExcludeFromMigrations());
+        modelBuilder.Entity<Models.MatchRoom>(e =>
+        {
+            e.ToTable("match_rooms");
+            //e.ToTable("match_rooms", t => t.ExcludeFromMigrations());
+            
+            e.OwnsMany(r => r.BannedMaps, b => b.ToJson("banned_maps"));
+            e.OwnsMany(r => r.PickedMaps, b => b.ToJson("picked_maps"));
+        });
         
         modelBuilder.Entity<Models.QualifierRoom>().ToTable("qualifier_rooms");
         //modelBuilder.Entity<Models.QualifierRoom>().ToTable("qualifier_rooms", t => t.ExcludeFromMigrations());

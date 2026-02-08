@@ -29,6 +29,12 @@ public class Models
 
         [Column("referee_id")]
         public int? RefereeId { get; set; }
+                
+        [Column("banned_maps")]
+        public List<RoundChoice>? BannedMaps { get; set; }
+        
+        [Column("picked_maps")]
+        public List<RoundChoice>? PickedMaps { get; set; }
 
         [ForeignKey("RoundId")]
         public virtual Round Round { get; set; }
@@ -60,7 +66,7 @@ public class Models
         public int RoundId { get; set; }
         
         [Column("requested_by")]
-        public TeamInfo? RequestedBy { get; set; }
+        public int RequestedBy { get; set; }
         
         [Column("is_approved")]
         public bool Approved { get; set; }
@@ -170,6 +176,18 @@ public class Models
         public string Slot { get; set; }
     }
 
+    public class RoundChoice
+    {
+        public string Slot { get; set; }
+        public TeamColor TeamColor { get; set; }
+    }
+
+    public enum TeamColor
+    {
+        TeamBlue,
+        TeamRed,
+    }
+
     public enum BansType
     {
         SpanishShowdown = 0,
@@ -181,4 +199,5 @@ public class Models
         EliminationStage = 0,
         QualifiersStage = 1,
     }
+
 }
