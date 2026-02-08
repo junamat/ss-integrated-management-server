@@ -179,6 +179,18 @@ public class DiscordManager
             await Tests.TestFill();
             await message.Channel.SendMessageAsync("Sample database filled.");
         }
+
+        if (message.Content == "ITS ME")
+        {
+            string s1 = "https://methalox.s-ul.eu/ReZNgSND";
+            string s2 = "https://methalox.s-ul.eu/rI0fEYx9";
+            string s3 = "https://methalox.s-ul.eu/xKGEVh9c";
+            string s4 = "https://methalox.s-ul.eu/NSs8jJAA";
+            string[] list = { s1, s2, s3, s4 };
+            
+            var rnd = new Random();
+            await message.Channel.SendMessageAsync(list[rnd.Next(0, list.Length)]);
+        }
     }
 
     private void HandleMatchIRCMessage(string matchId, string messageContent)
