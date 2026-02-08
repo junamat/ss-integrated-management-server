@@ -14,8 +14,8 @@ namespace ss.Integrated.Management.Server
             Console.WriteLine("--- Iniciando Seed ---");
 
             // 1. Crear Osu Users (Cache)
-            var osuUser1 = new Models.OsuUser { Id = 727, DisplayName = "towny1" };
-            var osuUser2 = new Models.OsuUser { Id = 12431, DisplayName = "A L E P H" };
+            var osuUser1 = new Models.OsuUser { Id = 727, DisplayName = "Hide in room" };
+            var osuUser2 = new Models.OsuUser { Id = 12431, DisplayName = "senya-" };
 
             if (!db.Set<Models.OsuUser>().Any())
             {

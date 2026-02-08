@@ -74,6 +74,8 @@ public partial class AutoRefEliminationStage : IAutoRef
 
             currentMatch.TeamRed = await db.Users.FirstAsync(u => u.Id == currentMatch.TeamRedId);
             currentMatch.TeamBlue = await db.Users.FirstAsync(u => u.Id == currentMatch.TeamBlueId);
+            
+            currentMatch.Round = await db.Rounds.FirstAsync(r => r.Id == currentMatch.RoundId);
         }
 
         await ConnectToBancho();
@@ -355,7 +357,7 @@ public partial class AutoRefEliminationStage : IAutoRef
             }
         }
 
-        if (state == MatchState.WaitingForBanRed && sender == currentMatch!.TeamRed.DisplayName)
+        if (state == MatchState.WaitingForBanRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ','_'))
         {
             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
             {
@@ -366,7 +368,7 @@ public partial class AutoRefEliminationStage : IAutoRef
 
                 if (repeat == 0)
                 {
-                    state = MatchState.Idle; 
+                    state = MatchState.PickPhaseStart;
                     repeat = 2;
                 }
                 else
@@ -376,8 +378,11 @@ public partial class AutoRefEliminationStage : IAutoRef
                 }
                 
             }
+            
+            return;
         }
-        else if (state == MatchState.WaitingForBanBlue && sender == currentMatch!.TeamBlue.DisplayName)
+
+        if (state == MatchState.WaitingForBanBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ','_'))
         {
             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
             {
@@ -388,7 +393,7 @@ public partial class AutoRefEliminationStage : IAutoRef
 
                 if (repeat == 0)
                 {
-                    state = MatchState.Idle;
+                    state = MatchState.PickPhaseStart;
                     repeat = 2;
                 }
                 else
@@ -397,6 +402,8 @@ public partial class AutoRefEliminationStage : IAutoRef
                     await SendMessageBothWays($"Please {currentMatch!.TeamRed.DisplayName}, state in chat your BAN (ej.: NM1, HD2)");
                 }
             }
+            
+            return;
         }
 
         #endregion
@@ -417,7 +424,7 @@ public partial class AutoRefEliminationStage : IAutoRef
             }
         }
 
-        if (state == MatchState.WaitingForPickRed && sender == currentMatch!.TeamRed.DisplayName)
+        if (state == MatchState.WaitingForPickRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ','_'))
         {
             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
             {
@@ -427,7 +434,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 lastPick = TeamColor.TeamRed;
             }
         }
-        else if (state == MatchState.WaitingForPickBlue && sender == currentMatch!.TeamBlue.DisplayName)
+        else if (state == MatchState.WaitingForPickBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ','_'))
         {
             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
             {
@@ -472,12 +479,16 @@ public partial class AutoRefEliminationStage : IAutoRef
                     {
                         await SendMessageBothWays($"GGWP! {currentMatch!.TeamRed.DisplayName} wins the match!");
                         state = MatchState.MatchFinished;
-                    } else if (bluewin)
+                        return;
+                    }
+
+                    if (bluewin)
                     {
                         await SendMessageBothWays($"GGWP! {currentMatch!.TeamBlue.DisplayName} wins the match!");
                         state = MatchState.MatchFinished;
+                        return;
                     }
-                    
+
                     if (lastPick == TeamColor.TeamRed)
                     {
                         state = MatchState.WaitingForPickBlue;

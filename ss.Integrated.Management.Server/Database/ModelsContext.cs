@@ -9,6 +9,7 @@ public class ModelsContext : DbContext
     public DbSet<Models.QualifierRoom> QualifierRooms { get; set; }
     public DbSet<Models.PlayerInfo> Players { get; set; }
     public DbSet<Models.TeamInfo> Users { get; set; }
+    public DbSet<Models.Round> Rounds { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
