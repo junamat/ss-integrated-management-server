@@ -55,7 +55,7 @@
         <value>El equipo rojo ha baneado el {0}.</value>
     </data>
     <data name="RedPicked" xml:space="preserve">
-        <value>El equipo rojo ha baneado el {0}.</value>
+        <value>El equipo rojo ha pickeado el {0}.</value>
     </data>
     <data name="RedWins" xml:space="preserve">
         <value>El equipo rojo gana el mapa! ({0} vs. {1})</value>
