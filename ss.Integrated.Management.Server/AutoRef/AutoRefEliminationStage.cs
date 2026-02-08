@@ -423,6 +423,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 await SendMessageBothWays(string.Format(Strings.MatchWin, currentMatch!.TeamBlue.DisplayName));
                 state = MatchState.WaitingForPickBlue;
             }
+            return;
         }
 
         if (state == MatchState.WaitingForPickRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ','_'))
@@ -434,8 +435,10 @@ public partial class AutoRefEliminationStage : IAutoRef
                 await PreparePick(content.ToUpper());
                 lastPick = TeamColor.TeamRed;
             }
+            return;
         }
-        else if (state == MatchState.WaitingForPickBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ','_'))
+
+        if (state == MatchState.WaitingForPickBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ','_'))
         {
             if (currentMatch.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null)
             {
@@ -444,6 +447,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 await PreparePick(content.ToUpper());
                 lastPick = TeamColor.TeamBlue;
             }
+            return;
         }
 
         #endregion
@@ -471,6 +475,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                     if (pickedMaps.Count == currentMatch.Round.BestOf - 1)
                     {
                         await PreparePick("TB1");
+                        return;
                     }
 
                     bool redwin = matchScore[0] == ((currentMatch.Round.BestOf - 1) / 2) + 1;
@@ -492,13 +497,13 @@ public partial class AutoRefEliminationStage : IAutoRef
 
                     if (lastPick == TeamColor.TeamRed)
                     {
-                        state = MatchState.WaitingForPickBlue;
                         await SendMessageBothWays(string.Format(Strings.PickCall, currentMatch!.TeamBlue.DisplayName));
+                        state = MatchState.WaitingForPickBlue;
                     }
                     else
                     {
-                        state = MatchState.WaitingForPickRed;
                         await SendMessageBothWays(string.Format(Strings.PickCall, currentMatch!.TeamRed.DisplayName));
+                        state = MatchState.WaitingForPickRed;
                     }
                 }
             }
