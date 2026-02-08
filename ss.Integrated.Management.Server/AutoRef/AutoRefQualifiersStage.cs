@@ -1,7 +1,7 @@
 ﻿using BanchoSharp;
 using BanchoSharp.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using ss.Internal.Management.Server.Localization;
+using ss.Internal.Management.Server.Resources;
 
 namespace ss.Internal.Management.Server.AutoRef;
 
@@ -115,7 +115,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
 
         if (content.Contains("!panic_over"))
         {
-            await SendMessageBothWays(I18n.T("BackToAuto"));
+            await SendMessageBothWays(Strings.BackToAuto);
             state = MatchState.WaitingForStart;
             await SendMessageBothWays("!mp timer 10");
         }
@@ -125,7 +125,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
             await SendMessageBothWays("!mp aborttimer");
 
             await SendMessageBothWays(
-                I18n.T("Panic", Environment.GetEnvironmentVariable("DISCORD_REFEREE_ROLE_ID"), senderNick)
+                string.Format(Strings.Panic, Environment.GetEnvironmentVariable("DISCORD_REFEREE_ROLE_ID"), senderNick)
                 );
         }
 
@@ -160,7 +160,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
                 break;
             case "start":
                 await SendMessageBothWays(
-                    I18n.T("QualifiersAutoEngage", currentMatch!.Id));
+                    string.Format(Strings.QualifiersAutoEngage, currentMatch!.Id));
                 _ = StartQualifiersFlow();
                 break;
         }
@@ -232,7 +232,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
     {
         if (currentMapIndex >= currentMatch!.Round.MapPool.Count)
         {
-            await SendMessageBothWays(I18n.T("QualifiersOver"));
+            await SendMessageBothWays(Strings.QualifiersOver);
             state = MatchState.MatchFinished;
             return;
         }
