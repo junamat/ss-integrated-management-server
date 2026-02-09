@@ -119,7 +119,7 @@ public partial class AutoRefEliminationStage : IAutoRef
 
         client.OnAuthenticated += () =>
         {
-            _ = client.MakeTournamentLobbyAsync($"{Program.TournamentName}: ({currentMatch.TeamRed.DisplayName}) vs ({currentMatch.TeamBlue.DisplayName})", true);
+            _ = client.MakeTournamentLobbyAsync($"{Program.TournamentName}: ({currentMatch.TeamRed.DisplayName}) vs ({currentMatch.TeamBlue.DisplayName})", true); // TODO poner en false
         };
 
         await client.ConnectAsync();
@@ -274,7 +274,7 @@ public partial class AutoRefEliminationStage : IAutoRef
         await Task.Delay(250);
         await SendMessageBothWays($"Available: {availablemaps}");
         await Task.Delay(250);
-        await SendMessageBothWays($"Red timeout available: {redTimeoutRequest} | Blue timeout available: {blueTimeoutRequest}");
+        await SendMessageBothWays($"Red timeout available: {!redTimeoutRequest} | Blue timeout available: {!blueTimeoutRequest}");
     }
 
     private async Task ExecuteAdminCommand(string sender, string[] args)
@@ -296,6 +296,12 @@ public partial class AutoRefEliminationStage : IAutoRef
                 await SendMessageBothWays($"!mp invite {currentMatch!.TeamRed.DisplayName.Replace(' ', '_')}");
                 await Task.Delay(250);
                 await SendMessageBothWays($"!mp invite {currentMatch!.TeamBlue.DisplayName.Replace(' ', '_')}");
+                break;
+            
+            case "finishup":
+                await SendMessageBothWays("!mp close");
+                await client!.DisconnectAsync();
+                await StopAsync();
                 break;
 
             case "maps":
@@ -518,7 +524,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 else
                 {
                     currentState = MatchState.WaitingForBanBlue;
-                    await SendStateInfo(string.Format(Strings.BanCall, currentMatch!.TeamBlue.DisplayName));
+                    await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamBlue.DisplayName));
                 }
             }
 
@@ -542,7 +548,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 else
                 {
                     currentState = MatchState.WaitingForBanRed;
-                    await SendStateInfo(string.Format(Strings.BanCall, currentMatch!.TeamRed.DisplayName));
+                    await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamRed.DisplayName));
                 }
             }
 
