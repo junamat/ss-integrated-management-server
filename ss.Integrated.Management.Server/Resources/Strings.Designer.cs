@@ -165,9 +165,9 @@ namespace ss.Internal.Management.Server.Resources {
             }
         }
         
-        internal static string AutorefError {
+        internal static string ErrAutoref {
             get {
-                return ResourceManager.GetString("AutorefError", resourceCulture);
+                return ResourceManager.GetString("ErrAutoref", resourceCulture);
             }
         }
         
@@ -246,6 +246,30 @@ namespace ss.Internal.Management.Server.Resources {
         internal static string TimeoutStart {
             get {
                 return ResourceManager.GetString("TimeoutStart", resourceCulture);
+            }
+        }
+        
+        internal static string ErrInitAutoref {
+            get {
+                return ResourceManager.GetString("ErrInitAutoref", resourceCulture);
+            }
+        }
+        
+        internal static string ErrChannelNotFound {
+            get {
+                return ResourceManager.GetString("ErrChannelNotFound", resourceCulture);
+            }
+        }
+        
+        internal static string MatchFinishedGlobal {
+            get {
+                return ResourceManager.GetString("MatchFinishedGlobal", resourceCulture);
+            }
+        }
+        
+        internal static string MatchFinishedThread {
+            get {
+                return ResourceManager.GetString("MatchFinishedThread", resourceCulture);
             }
         }
     }

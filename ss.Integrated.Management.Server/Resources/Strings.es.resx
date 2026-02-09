@@ -84,7 +84,7 @@
     <data name="WorkerNotFound" xml:space="preserve">
         <value>No se encontró un worker activo con ese Match ID.</value>
     </data>
-    <data name="AutorefError" xml:space="preserve">
+    <data name="ErrAutoref" xml:space="preserve">
         <value>Error durante la ejecución del AutoRef: `{0}`</value>
     </data>
     <data name="AutoAlreadyEngaged" xml:space="preserve">
@@ -119,5 +119,17 @@
     </data>
     <data name="TimeoutStart" xml:space="preserve">
         <value>Empezando timeout, recuerda estar listo/pickear/banear antes de que acabe!</value>
+    </data>
+    <data name="ErrChannelNotFound" xml:space="preserve">
+        <value>Error: No se encontró el canal con ID {0}</value>
+    </data>
+    <data name="ErrInitAutoref" xml:space="preserve">
+        <value>Error al iniciar AutoRef: {0}</value>
+    </data>
+    <data name="MatchFinishedGlobal" xml:space="preserve">
+        <value>Partido finalizado. Archivando hilo &lt;#{0}&gt;...</value>
+    </data>
+    <data name="MatchFinishedThread" xml:space="preserve">
+        <value>**El partido ha finalizado.** Este hilo será archivado.</value>
     </data>
 </root>

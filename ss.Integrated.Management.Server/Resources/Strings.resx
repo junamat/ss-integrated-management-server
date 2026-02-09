@@ -78,7 +78,7 @@
     <data name="WorkerInit" xml:space="preserve">
         <value>Channel created for referee: **{0}**. Starting worker...</value>
     </data>
-    <data name="AutorefError" xml:space="preserve">
+    <data name="ErrAutoref" xml:space="preserve">
         <value>Error while executing AutoRef: `{0}`</value>
     </data>
     <data name="WorkerNotFound" xml:space="preserve">
@@ -119,5 +119,17 @@
     </data>
     <data name="TimeoutStart" xml:space="preserve">
         <value>Starting timeout, remember to be ready/pick/ban before it runs out!</value>
+    </data>
+    <data name="ErrInitAutoref" xml:space="preserve">
+        <value>Error while initializing AutoRef: {0}</value>
+    </data>
+    <data name="ErrChannelNotFound" xml:space="preserve">
+        <value>Error: Channel with ID {0} couldn't be found</value>
+    </data>
+    <data name="MatchFinishedGlobal" xml:space="preserve">
+        <value>Match finished. Locking thread &lt;#{0}&gt;...</value>
+    </data>
+    <data name="MatchFinishedThread" xml:space="preserve">
+        <value>**The match has finished.** This thread will be locked.</value>
     </data>
 </root>
