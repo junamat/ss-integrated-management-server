@@ -309,6 +309,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 await SendMessageBothWays(string.Format(Strings.EngagingAuto, currentMatch!.Id));
                 state = MatchState.BanPhaseStart;
                 auto = true;
+                await TryStateChange("a", "a"); // esto es lo más peruano que he hecho pero adivina que, funciona
                 break;
 
             case "firstpick":
