@@ -47,8 +47,8 @@ namespace ss.Integrated.Management.Server
             {
                 Id = 1,
                 DisplayName = "Grand Finals",
-                BestOf = 9,
-                BanRounds = 1,
+                BestOf = 13,
+                BanRounds = 2,
                 Mode = Models.BansType.SpanishShowdown,
                 MapPool = new List<Models.RoundBeatmap>
                 {

@@ -17,11 +17,11 @@ public class DiscordManager
     private readonly IServiceProvider services;
 
     private readonly ulong guildId = Convert.ToUInt64(Environment.GetEnvironmentVariable("DISCORD_GUILD_ID"));
-    private readonly ulong targetCategoryId = Convert.ToUInt64(Environment.GetEnvironmentVariable("DISCORD_REFEREE_CATEGORY_ID"));
+    private readonly ulong parentChannelId = Convert.ToUInt64(Environment.GetEnvironmentVariable("DISCORD_MATCHES_CHANNEL_ID"));
     private readonly string token;
 
     // Diccionarios de estado para saber lo que acontece. Por si me olvido (ocurrirá):
-    // activeChannels => <match_id, channel_id>
+    // activeChannels => <match_id, thread_id>
     // activeMatches  => <match_id, autoref_instance>
     private ConcurrentDictionary<string, ulong> activeChannels = new();
     private ConcurrentDictionary<string, IAutoRef> activeMatches = new();
@@ -92,23 +92,31 @@ public class DiscordManager
 
     public async Task<bool> CreateMatchEnvironmentAsync(string matchId, string referee, IGuild guild, Models.MatchType type)
     {
-        if (activeMatches.ContainsKey(matchId)) return false; // Ya existe
+        if (activeMatches.ContainsKey(matchId)) return false;
 
-        var newChannel = await guild.CreateTextChannelAsync($"match_{matchId}", props =>
+        var parentChannel = await guild.GetTextChannelAsync(parentChannelId);
+
+        if (parentChannel == null)
         {
-            props.CategoryId = targetCategoryId;
-            props.Topic = $"Referee: {referee} | Match ID: {matchId}";
-        });
+            Console.WriteLine($"Error: No se encontró el canal con ID {parentChannelId}");
+            return false;
+        }
 
-        activeChannels.TryAdd(matchId, newChannel.Id);
+        var newThread = await parentChannel.CreateThreadAsync(
+            name: $"{Program.TournamentName}_match_{matchId}",
+            autoArchiveDuration: ThreadArchiveDuration.OneDay,
+            type: ThreadType.PublicThread
+        );
+
+        activeChannels.TryAdd(matchId, newThread.Id);
 
         IAutoRef worker = type == Models.MatchType.QualifiersStage
             ? new AutoRefQualifiersStage(matchId, referee, HandleMatchIRCMessage)
             : new AutoRefEliminationStage(matchId, referee, HandleMatchIRCMessage);
-        
+
         activeMatches.TryAdd(matchId, worker);
 
-        await newChannel.SendMessageAsync(string.Format(Strings.WorkerInit, referee));
+        await newThread.SendMessageAsync(string.Format(Strings.WorkerInit, referee));
 
         try
         {
@@ -116,7 +124,7 @@ public class DiscordManager
         }
         catch (Exception ex)
         {
-            await newChannel.SendMessageAsync(string.Format(Strings.AutorefError, ex.Message));
+            await newThread.SendMessageAsync($"Error al iniciar AutoRef: {ex.Message}");
         }
 
         return true;
@@ -126,24 +134,28 @@ public class DiscordManager
     {
         if (activeMatches.TryRemove(matchId, out var worker))
         {
-            // TODO parar AutoRef thread 
-            Console.WriteLine($"Worker {matchId} deleted from memory.");
+            await worker.StopAsync();
+            Console.WriteLine($"Worker {matchId} stopped.");
         }
         else
         {
-            await requestChannel.SendMessageAsync(Strings.WorkerNotFound);
+            await requestChannel.SendMessageAsync("No se encontró un worker activo para esa match.");
             return;
         }
 
-        if (activeChannels.TryRemove(matchId, out ulong channelId))
+        if (activeChannels.TryRemove(matchId, out ulong threadId))
         {
-            var channel = client.GetChannel(channelId) as ITextChannel;
-
-            if (channel != null)
+            if (client.GetChannel(threadId) is IThreadChannel thread)
             {
-                await requestChannel.SendMessageAsync(Strings.DeletingChannel);
-                await Task.Delay(3000);
-                await channel.DeleteAsync();
+                await requestChannel.SendMessageAsync($"Match finalizado. Archivando hilo <#{threadId}>...");
+
+                await thread.SendMessageAsync("**La match ha finalizado.** Este hilo será archivado.");
+
+                await thread.ModifyAsync(props =>
+                {
+                    props.Archived = true;
+                    props.Locked = true;
+                });
             }
         }
     }
@@ -167,7 +179,7 @@ public class DiscordManager
 
                 bool isCommand = msgToIRC.StartsWith("!");
                 bool interaction = msgToIRC.StartsWith(">");
-                    
+
                 if (!isCommand && !interaction) msgToIRC = $"[DISCORD | {message.Author.Username}] {message.Content}";
 
                 // Busca la instancia de autoref asociada al canal al que se envia el mensaje
@@ -189,7 +201,7 @@ public class DiscordManager
             string s3 = "https://methalox.s-ul.eu/xKGEVh9c";
             string s4 = "https://methalox.s-ul.eu/NSs8jJAA";
             string[] list = { s1, s2, s3, s4 };
-            
+
             var rnd = new Random();
             await message.Channel.SendMessageAsync(list[rnd.Next(0, list.Length)]);
         }
