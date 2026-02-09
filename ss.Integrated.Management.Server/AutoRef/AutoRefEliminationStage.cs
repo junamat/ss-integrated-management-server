@@ -16,8 +16,11 @@ public partial class AutoRefEliminationStage : IAutoRef
     private string? lobbyChannelName;
 
     private int[] matchScore = [0, 0];
-    private bool auto = false;
+    
     private bool joined = false;
+
+    private bool redTimeoutRequest;
+    private bool blueTimeoutRequest;
 
     private int repeat = 2;
 
@@ -31,7 +34,8 @@ public partial class AutoRefEliminationStage : IAutoRef
 
     private TeamColor lastPick = TeamColor.None;
 
-    private MatchState state;
+    private MatchState currentState;
+    private MatchState previousState;
 
     private TaskCompletionSource<string>? chatResponseTcs;
 
@@ -56,6 +60,7 @@ public partial class AutoRefEliminationStage : IAutoRef
         WaitingForStart,
         Playing,
         MatchFinished,
+        OnTimeout,
         MatchOnHold,
     }
 
@@ -194,12 +199,12 @@ public partial class AutoRefEliminationStage : IAutoRef
         if (content.Contains("!panic_over"))
         {
             await SendMessageBothWays(Strings.BackToAuto);
-            state = MatchState.WaitingForStart;
+            currentState = MatchState.WaitingForStart;
             await SendMessageBothWays("!mp timer 10");
         }
         else if (content.Contains("!panic"))
         {
-            state = MatchState.MatchOnHold;
+            currentState = MatchState.MatchOnHold;
             await SendMessageBothWays("!mp aborttimer");
 
             await SendMessageBothWays(
@@ -270,6 +275,8 @@ public partial class AutoRefEliminationStage : IAutoRef
         await SendMessageBothWays($"Bans: {bannedmaps} | Picks: {pickedmaps}");
         await Task.Delay(250);
         await SendMessageBothWays($"Available: {availablemaps}");
+        await Task.Delay(250);
+        await SendMessageBothWays($"Red timeout available: {redTimeoutRequest} | Blue timeout available: {blueTimeoutRequest}");
     }
 
     private async Task ExecuteAdminCommand(string sender, string[] args)
@@ -298,6 +305,13 @@ public partial class AutoRefEliminationStage : IAutoRef
             case "maps":
                 await SendMatchStatus();
                 break;
+            
+            case "timeout":
+                await SendMessageBothWays("Timeout requested by the referee of the match. Time will be added after the timer runs out");
+                await Task.Delay(250);
+                previousState = currentState;
+                currentState = MatchState.OnTimeout;
+                break;
 
             case "start":
                 if (firstPick == TeamColor.None || firstBan == TeamColor.None)
@@ -307,8 +321,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 }
 
                 await SendMessageBothWays(string.Format(Strings.EngagingAuto, currentMatch!.Id));
-                state = MatchState.BanPhaseStart;
-                auto = true;
+                currentState = MatchState.BanPhaseStart;
                 await TryStateChange("a", "a"); // esto es lo más peruano que he hecho pero adivina que, funciona
                 break;
 
@@ -344,18 +357,6 @@ public partial class AutoRefEliminationStage : IAutoRef
     {
         await client!.SendPrivateMessageAsync(lobbyChannelName!, content);
         msgCallback(matchId, $"**[AUTO | {currentMatch!.Referee.DisplayName}]** {content}");
-    }
-
-    private async Task WaitForResponseAsync(string keyword)
-    {
-        chatResponseTcs = new TaskCompletionSource<string>();
-
-        var ct = new CancellationTokenSource(TimeSpan.FromMinutes(2)).Token;
-
-        await using (ct.Register(() => chatResponseTcs.TrySetCanceled()))
-        {
-            await chatResponseTcs.Task;
-        }
     }
 
     private bool SearchKeywords(string content)
@@ -395,36 +396,78 @@ public partial class AutoRefEliminationStage : IAutoRef
         await Task.Delay(250);
         await SendMessageBothWays($"!mp mods {slot[..2]} NF");
         await Task.Delay(250);
-        await SendMessageBothWays("!mp timer 120");
+        await SendMessageBothWays("!mp timer 90");
 
-        state = MatchState.WaitingForStart;
+        currentState = MatchState.WaitingForStart;
+    }
+
+    private async Task SendStateInfo(string info)
+    {
+        await SendMessageBothWays(info);
+        await Task.Delay(250);
+        await SendMatchStatus();
+        await Task.Delay(250);
+        await SendMessageBothWays("!mp timer 90");
     }
 
     private async Task TryStateChange(string sender, string content) // transiciones de estado
     {
-        if (state == MatchState.Idle) return;
+        if (currentState == MatchState.Idle) return;
+
+        #region TimeoutRegion
+
+        if ((currentState == MatchState.WaitingForStart ||
+             currentState == MatchState.WaitingForBanBlue ||
+             currentState == MatchState.WaitingForBanRed ||
+             currentState == MatchState.WaitingForPickBlue ||
+             currentState == MatchState.WaitingForPickRed) && content == "!timeout")
+        {
+            if (sender == currentMatch!.TeamRed.DisplayName.Replace(' ', '_') && !redTimeoutRequest)
+            {
+                await SendMessageBothWays("Team Red has requested a timeout. Time will be added after current timer runs out");
+                previousState = currentState;
+                currentState = MatchState.OnTimeout;
+                redTimeoutRequest = true;
+            }
+            else if (sender == currentMatch!.TeamBlue.DisplayName.Replace(' ', '_') && !blueTimeoutRequest)
+            {
+                await SendMessageBothWays("Team Blue has requested a timeout. Time will be added after current timer runs out");
+                previousState = currentState;
+                currentState = MatchState.OnTimeout;
+                blueTimeoutRequest = true;
+            }
+            
+            return;
+        }
+
+        if (currentState == MatchState.OnTimeout && sender == "BanchoBot" && content == "Countdown finished")
+        {
+            await SendMessageBothWays("!mp timer 120");
+            await Task.Delay(250);
+            await SendMessageBothWays("Starting timeout, remember to be ready/pick/ban before it runs out!");
+            currentState = previousState;
+            return;
+        } 
+
+        #endregion
 
         #region BanningPhaseRegion
 
-        if (state == MatchState.BanPhaseStart)
+        if (currentState == MatchState.BanPhaseStart)
         {
             if (firstBan == TeamColor.TeamRed)
             {
-                await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamRed.DisplayName));
-                await Task.Delay(250);
-                await SendMatchStatus();
-                state = MatchState.WaitingForBanRed;
+                await SendStateInfo(string.Format(Strings.BanCall, currentMatch!.TeamRed.DisplayName));
+                currentState = MatchState.WaitingForBanRed;
             }
             else
             {
-                await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamBlue.DisplayName));
-                await Task.Delay(250);
-                await SendMatchStatus();
-                state = MatchState.WaitingForBanBlue;
+                await SendStateInfo(string.Format(Strings.BanCall, currentMatch!.TeamBlue.DisplayName));
+                currentState = MatchState.WaitingForBanBlue;
             }
         }
 
-        if (state == MatchState.WaitingForBanRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ', '_'))
+        if (currentState == MatchState.WaitingForBanRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ', '_'))
         {
             if (IsMapAvailable(content))
             {
@@ -435,22 +478,20 @@ public partial class AutoRefEliminationStage : IAutoRef
 
                 if (repeat == 0)
                 {
-                    state = MatchState.PickPhaseStart;
+                    currentState = MatchState.PickPhaseStart;
                     repeat = 2;
                 }
                 else
                 {
-                    state = MatchState.WaitingForBanBlue;
-                    await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamBlue.DisplayName));
-                    await Task.Delay(250);
-                    await SendMatchStatus();
+                    currentState = MatchState.WaitingForBanBlue;
+                    await SendStateInfo(string.Format(Strings.BanCall, currentMatch!.TeamBlue.DisplayName));
                 }
             }
 
             return;
         }
 
-        if (state == MatchState.WaitingForBanBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ', '_'))
+        if (currentState == MatchState.WaitingForBanBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ', '_'))
         {
             if (IsMapAvailable(content))
             {
@@ -461,15 +502,13 @@ public partial class AutoRefEliminationStage : IAutoRef
 
                 if (repeat == 0)
                 {
-                    state = MatchState.PickPhaseStart;
+                    currentState = MatchState.PickPhaseStart;
                     repeat = 2;
                 }
                 else
                 {
-                    state = MatchState.WaitingForBanRed;
-                    await SendMessageBothWays(string.Format(Strings.BanCall, currentMatch!.TeamRed.DisplayName));
-                    await Task.Delay(250);
-                    await SendMatchStatus();
+                    currentState = MatchState.WaitingForBanRed;
+                    await SendStateInfo(string.Format(Strings.BanCall, currentMatch!.TeamRed.DisplayName));
                 }
             }
 
@@ -480,27 +519,23 @@ public partial class AutoRefEliminationStage : IAutoRef
 
         #region PickPhaseRegion
 
-        if (state == MatchState.PickPhaseStart)
+        if (currentState == MatchState.PickPhaseStart)
         {
             if (firstPick == TeamColor.TeamRed)
             {
-                await SendMessageBothWays(string.Format(Strings.PickCall, currentMatch!.TeamRed.DisplayName));
-                await Task.Delay(250);
-                await SendMatchStatus();
-                state = MatchState.WaitingForPickRed;
+                await SendStateInfo(string.Format(Strings.PickCall, currentMatch!.TeamRed.DisplayName));
+                currentState = MatchState.WaitingForPickRed;
             }
             else
             {
-                await SendMessageBothWays(string.Format(Strings.PickCall, currentMatch!.TeamBlue.DisplayName));
-                await Task.Delay(250);
-                await SendMatchStatus();
-                state = MatchState.WaitingForPickBlue;
+                await SendStateInfo(string.Format(Strings.PickCall, currentMatch!.TeamBlue.DisplayName));
+                currentState = MatchState.WaitingForPickBlue;
             }
 
             return;
         }
 
-        if (state == MatchState.WaitingForPickRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ', '_'))
+        if (currentState == MatchState.WaitingForPickRed && sender == currentMatch!.TeamRed.DisplayName.Replace(' ', '_'))
         {
             if (IsMapAvailable(content))
             {
@@ -513,7 +548,7 @@ public partial class AutoRefEliminationStage : IAutoRef
             return;
         }
 
-        if (state == MatchState.WaitingForPickBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ', '_'))
+        if (currentState == MatchState.WaitingForPickBlue && sender == currentMatch!.TeamBlue.DisplayName.Replace(' ', '_'))
         {
             if (IsMapAvailable(content))
             {
@@ -528,21 +563,21 @@ public partial class AutoRefEliminationStage : IAutoRef
 
         #endregion
 
-        if (state == MatchState.WaitingForStart)
+        if (currentState == MatchState.WaitingForStart)
         {
             if ((content.Contains("All players are ready") || content.Contains("Countdown finished")) && sender == "BanchoBot")
             {
                 await SendMessageBothWays("!mp start 10");
-                state = MatchState.Playing;
+                currentState = MatchState.Playing;
             }
         }
-        else if (state == MatchState.Playing)
+        else if (currentState == MatchState.Playing)
         {
             if (content.Contains("The match has finished"))
             {
                 if (currentMatch!.Round.BanRounds == 2 && pickedMaps.Count == 4)
                 {
-                    state = MatchState.BanPhaseStart;
+                    currentState = MatchState.BanPhaseStart;
                     await SendMessageBothWays(Strings.SecondBanRound);
                 }
                 else
@@ -559,14 +594,14 @@ public partial class AutoRefEliminationStage : IAutoRef
                     if (redwin)
                     {
                         await SendMessageBothWays(string.Format(Strings.MatchWin, currentMatch!.TeamRed.DisplayName));
-                        state = MatchState.MatchFinished;
+                        currentState = MatchState.MatchFinished;
                         return;
                     }
 
                     if (bluewin)
                     {
                         await SendMessageBothWays(string.Format(Strings.MatchWin, currentMatch!.TeamBlue.DisplayName));
-                        state = MatchState.MatchFinished;
+                        currentState = MatchState.MatchFinished;
                         return;
                     }
 
@@ -575,14 +610,14 @@ public partial class AutoRefEliminationStage : IAutoRef
                         await SendMessageBothWays(string.Format(Strings.PickCall, currentMatch!.TeamBlue.DisplayName));
                         await Task.Delay(250);
                         await SendMatchStatus();
-                        state = MatchState.WaitingForPickBlue;
+                        currentState = MatchState.WaitingForPickBlue;
                     }
                     else
                     {
                         await SendMessageBothWays(string.Format(Strings.PickCall, currentMatch!.TeamRed.DisplayName));
                         await Task.Delay(250);
                         await SendMatchStatus();
-                        state = MatchState.WaitingForPickRed;
+                        currentState = MatchState.WaitingForPickRed;
                     }
                 }
             }
