@@ -14,6 +14,6 @@ Esto en principio es casi como una to-do list pero bueno:
 - Integración directa con discord
 - AutoRef para lobbys de Qualifiers
 - AutoRef para lobbys de Fase eliminatoria
-- Parseo del csv del script de LeoFLT para lobbys de qualifiers (https://gist.github.com/LeoFLT/2a7e0c3c201a327f022aa5b61b679d3f) [PENDING]
+- Parseo del csv del script de LeoFLT para lobbys de qualifiers (https://gist.github.com/LeoFLT/2a7e0c3c201a327f022aa5b61b679d3f)
 - Setup de matches [PENDING]
 - Reschedules [PENDING]
