@@ -91,8 +91,11 @@ public partial class AutoRefEliminationStage : IAutoRef
 
     public async Task StopAsync()
     {
-        await using var db = new ModelsContext();
+        // Este método solo debería ser llamado desde DiscordManager, de lo contrario nos
+        // metemos en camisa de once varas, cosa con la que tampoco quiero lidiar
         // TODO recheck si de verdad se guarda currentmatch
+
+        await using var db = new ModelsContext();
         currentMatch!.BannedMaps = bannedMaps;
         currentMatch!.PickedMaps = pickedMaps;
 
@@ -283,25 +286,15 @@ public partial class AutoRefEliminationStage : IAutoRef
 
         switch (args[0].ToLower())
         {
-            case "close":
-                await SendMessageBothWays("!mp close");
-                break;
-
-            case "panic_abort":
-                await SendMessageBothWays("!mp close");
-                await client!.DisconnectAsync();
-                break;
-
             case "invite":
                 await SendMessageBothWays($"!mp invite {currentMatch!.TeamRed.DisplayName.Replace(' ', '_')}");
                 await Task.Delay(250);
                 await SendMessageBothWays($"!mp invite {currentMatch!.TeamBlue.DisplayName.Replace(' ', '_')}");
                 break;
             
-            case "finishup":
+            case "finish":
                 await SendMessageBothWays("!mp close");
                 await client!.DisconnectAsync();
-                await StopAsync();
                 break;
 
             case "maps":

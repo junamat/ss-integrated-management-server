@@ -50,9 +50,13 @@ public partial class AutoRefQualifiersStage : IAutoRef
         await ConnectToBancho();
     }
 
-    public Task StopAsync()
+    public async Task StopAsync()
     {
-        throw new NotImplementedException();
+        // Este método solo debería ser llamado desde DiscordManager, de lo contrario nos
+        // metemos en camisa de once varas, cosa con la que tampoco quiero lidiar
+
+        await using var db = new ModelsContext();
+        await db.SaveChangesAsync();
     }
 
     private async Task ConnectToBancho()
@@ -154,6 +158,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
         {
             case "close":
                 await SendMessageBothWays("!mp close");
+                await client!.DisconnectAsync();
                 break;
             case "invite":
                 //TODO
