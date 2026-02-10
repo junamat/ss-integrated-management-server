@@ -124,7 +124,7 @@ public class DiscordManager
         }
         catch (Exception ex)
         {
-            await newThread.SendMessageAsync($"Error al iniciar AutoRef: {ex.Message}");
+            await newThread.SendMessageAsync(string.Format(Strings.ErrInitAutoref, ex.Message));
         }
 
         return true;
@@ -139,7 +139,7 @@ public class DiscordManager
         }
         else
         {
-            await requestChannel.SendMessageAsync("No se encontró un worker activo para esa match.");
+            await requestChannel.SendMessageAsync(Strings.WorkerNotFound);
             return;
         }
 
@@ -147,9 +147,9 @@ public class DiscordManager
         {
             if (client.GetChannel(threadId) is IThreadChannel thread)
             {
-                await requestChannel.SendMessageAsync($"Match finalizado. Archivando hilo <#{threadId}>...");
+                await requestChannel.SendMessageAsync(string.Format(Strings.MatchFinishedGlobal, threadId));
 
-                await thread.SendMessageAsync("**La match ha finalizado.** Este hilo será archivado.");
+                await thread.SendMessageAsync(Strings.MatchFinishedThread);
 
                 await thread.ModifyAsync(props =>
                 {

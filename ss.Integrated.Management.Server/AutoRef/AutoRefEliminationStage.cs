@@ -264,8 +264,8 @@ public partial class AutoRefEliminationStage : IAutoRef
 
     private async Task SendMatchStatus()
     {
-        string bannedmaps = bannedMaps.Any() ? string.Join(", ", bannedMaps.Select(m => m.Slot)) : "None";
-        string pickedmaps = pickedMaps.Any() ? string.Join(", ", pickedMaps.Select(m => m.Slot)) : "None";
+        string bannedmaps = bannedMaps.Any() ? string.Join(", ", bannedMaps.Select(m => m.Slot)) : Strings.None;
+        string pickedmaps = pickedMaps.Any() ? string.Join(", ", pickedMaps.Select(m => m.Slot)) : Strings.None;
 
         string availablemaps = string.Join(", ", currentMatch!.Round.MapPool
             .Where(m =>
@@ -275,9 +275,9 @@ public partial class AutoRefEliminationStage : IAutoRef
 
         await SendMessageBothWays($"Bans: {bannedmaps} | Picks: {pickedmaps}");
         await Task.Delay(250);
-        await SendMessageBothWays($"Available: {availablemaps}");
+        await SendMessageBothWays(string.Format(Strings.AvailableMaps, availablemaps));
         await Task.Delay(250);
-        await SendMessageBothWays($"Red timeout available: {!redTimeoutRequest} | Blue timeout available: {!blueTimeoutRequest}");
+        await SendMessageBothWays(string.Format(Strings.TimeoutAvailable, !redTimeoutRequest, !blueTimeoutRequest));
     }
 
     private async Task ExecuteAdminCommand(string sender, string[] args)
@@ -304,7 +304,7 @@ public partial class AutoRefEliminationStage : IAutoRef
             case "setmap":
                 if (currentState != MatchState.Idle)
                 {
-                    await SendMessageBothWays("Auto is engaged, disable auto mode to manually set maps.");
+                    await SendMessageBothWays(Strings.SetMapFail);
                     break;
                 }
                 await PreparePick(args[1]);
@@ -312,7 +312,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 break;
             
             case "timeout":
-                await SendMessageBothWays("Timeout requested by the referee of the match. Time will be added after the timer runs out");
+                await SendMessageBothWays(Strings.RefTimeout);
                 await Task.Delay(250);
                 previousState = currentState;
                 currentState = MatchState.OnTimeout;
@@ -327,7 +327,7 @@ public partial class AutoRefEliminationStage : IAutoRef
 
                 if (currentState != MatchState.Idle)
                 {
-                    await SendMessageBothWays("Auto already engaged. Disable it with '>stop'.");
+                    await SendMessageBothWays(Strings.AutoAlreadyEngaged);
                     break;
                 }
                 
@@ -349,10 +349,10 @@ public partial class AutoRefEliminationStage : IAutoRef
             case "stop":
                 if (currentState == MatchState.Idle)
                 {
-                    await SendMessageBothWays("Auto is not engaged already.");
+                    await SendMessageBothWays(Strings.AutoAlreadyStopped);
                     break;
                 }
-                await SendMessageBothWays("Stopping auto mode...");
+                await SendMessageBothWays(Strings.StoppingAuto);
                 previousState = currentState;
                 currentState = MatchState.Idle;
                 stoppedPreviously = true;
@@ -457,14 +457,14 @@ public partial class AutoRefEliminationStage : IAutoRef
         {
             if (sender == currentMatch!.TeamRed.DisplayName.Replace(' ', '_') && !redTimeoutRequest)
             {
-                await SendMessageBothWays("Team Red has requested a timeout. Time will be added after current timer runs out");
+                await SendMessageBothWays(Strings.RedTimeout);
                 previousState = currentState;
                 currentState = MatchState.OnTimeout;
                 redTimeoutRequest = true;
             }
             else if (sender == currentMatch!.TeamBlue.DisplayName.Replace(' ', '_') && !blueTimeoutRequest)
             {
-                await SendMessageBothWays("Team Blue has requested a timeout. Time will be added after current timer runs out");
+                await SendMessageBothWays(Strings.BlueTimeout);
                 previousState = currentState;
                 currentState = MatchState.OnTimeout;
                 blueTimeoutRequest = true;
@@ -477,7 +477,7 @@ public partial class AutoRefEliminationStage : IAutoRef
         {
             await SendMessageBothWays("!mp timer 120");
             await Task.Delay(250);
-            await SendMessageBothWays("Starting timeout, remember to be ready/pick/ban before it runs out!");
+            await SendMessageBothWays(Strings.TimeoutStart);
             currentState = previousState;
             return;
         } 

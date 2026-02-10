@@ -165,9 +165,9 @@ namespace ss.Internal.Management.Server.Resources {
             }
         }
         
-        internal static string AutorefError {
+        internal static string ErrAutoref {
             get {
-                return ResourceManager.GetString("AutorefError", resourceCulture);
+                return ResourceManager.GetString("ErrAutoref", resourceCulture);
             }
         }
         
@@ -180,6 +180,96 @@ namespace ss.Internal.Management.Server.Resources {
         internal static string DeletingChannel {
             get {
                 return ResourceManager.GetString("DeletingChannel", resourceCulture);
+            }
+        }
+        
+        internal static string SetMapFail {
+            get {
+                return ResourceManager.GetString("SetMapFail", resourceCulture);
+            }
+        }
+        
+        internal static string RefTimeout {
+            get {
+                return ResourceManager.GetString("RefTimeout", resourceCulture);
+            }
+        }
+        
+        internal static string AutoAlreadyEngaged {
+            get {
+                return ResourceManager.GetString("AutoAlreadyEngaged", resourceCulture);
+            }
+        }
+        
+        internal static string AutoAlreadyStopped {
+            get {
+                return ResourceManager.GetString("AutoAlreadyStopped", resourceCulture);
+            }
+        }
+        
+        internal static string StoppingAuto {
+            get {
+                return ResourceManager.GetString("StoppingAuto", resourceCulture);
+            }
+        }
+        
+        internal static string None {
+            get {
+                return ResourceManager.GetString("None", resourceCulture);
+            }
+        }
+        
+        internal static string AvailableMaps {
+            get {
+                return ResourceManager.GetString("AvailableMaps", resourceCulture);
+            }
+        }
+        
+        internal static string TimeoutAvailable {
+            get {
+                return ResourceManager.GetString("TimeoutAvailable", resourceCulture);
+            }
+        }
+        
+        internal static string RedTimeout {
+            get {
+                return ResourceManager.GetString("RedTimeout", resourceCulture);
+            }
+        }
+        
+        internal static string BlueTimeout {
+            get {
+                return ResourceManager.GetString("BlueTimeout", resourceCulture);
+            }
+        }
+        
+        internal static string TimeoutStart {
+            get {
+                return ResourceManager.GetString("TimeoutStart", resourceCulture);
+            }
+        }
+        
+        internal static string ErrInitAutoref {
+            get {
+                return ResourceManager.GetString("ErrInitAutoref", resourceCulture);
+            }
+        }
+        
+        internal static string ErrChannelNotFound {
+            get {
+                return ResourceManager.GetString("ErrChannelNotFound", resourceCulture);
+            }
+        }
+        
+        internal static string MatchFinishedGlobal {
+            get {
+                return ResourceManager.GetString("MatchFinishedGlobal", resourceCulture);
+            }
+        }
+        
+        internal static string MatchFinishedThread {
+            get {
+                return ResourceManager.GetString("MatchFinishedThread", resourceCulture);
             }
         }
     }
