@@ -102,7 +102,7 @@ public class Models
         public List<RoundBeatmap> MapPool { get; set; }
     }
 
-    [Table("user")]
+    [Table("users")]
     public class TeamInfo
     {
         [Key]
