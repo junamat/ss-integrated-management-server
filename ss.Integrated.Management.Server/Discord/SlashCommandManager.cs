@@ -166,6 +166,32 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
     }
 
     [RequireFromEnvId("DISCORD_REFEREE_ROLE_ID")]
+    [SlashCommand("addmplinkid", "Añade un mp link a una match. Consulta previamente si ya tenía uno asignado")]
+    private async Task AddMpLinkIdAsync(string matchId, string mpLinkId)
+    {
+        await DeferAsync(ephemeral: false);
+        await using var db = new ModelsContext();
+        
+        var match = await db.MatchRooms.FirstOrDefaultAsync(m => m.Id == matchId);
+
+        if (!int.TryParse(mpLinkId, out int id))
+        {
+            await FollowupAsync("Mp link ID no válido. Debe ser un int");
+            return;
+        };
+
+        if (match == null)
+        {
+            await FollowupAsync("Match ID no válido.");
+            return;
+        }
+
+        match.MpLinkId = id;
+        await db.SaveChangesAsync();
+        await FollowupAsync($"MP link {mpLinkId} añadido a match {match.Id}");
+    }
+
+    [RequireFromEnvId("DISCORD_REFEREE_ROLE_ID")]
     [SlashCommand("removematchup", "Elimina una match del listado a través de su ID")]
     public async Task RemoveMatchAsync(string matchid)
     {

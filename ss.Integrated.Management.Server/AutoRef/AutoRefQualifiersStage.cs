@@ -19,6 +19,8 @@ public partial class AutoRefQualifiersStage : IAutoRef
     private int currentMapIndex;
     private MatchState state;
 
+    private int mpLinkId;
+
     private List<int> usersInRoom = new();
 
     private TaskCompletionSource<string>? chatResponseTcs;
@@ -121,6 +123,8 @@ public partial class AutoRefQualifiersStage : IAutoRef
             case "BanchoBot" when content.Contains("Created the tournament match"):
                 var parts = content.Split('/');
                 var idPart = parts.Last().Split(' ')[0];
+
+                mpLinkId = int.Parse(idPart);
                 lobbyChannelName = $"#mp_{idPart}";
 
                 await client!.JoinChannelAsync(lobbyChannelName);
@@ -181,7 +185,8 @@ public partial class AutoRefQualifiersStage : IAutoRef
 
         switch (args[0].ToLower())
         {
-            case "close":
+            case "finish":
+                currentMatch!.MpLinkId = mpLinkId;
                 await SendMessageBothWays("!mp close");
                 await client!.DisconnectAsync();
                 break;

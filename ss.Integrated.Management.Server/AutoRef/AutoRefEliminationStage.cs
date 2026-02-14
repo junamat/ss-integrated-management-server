@@ -22,6 +22,8 @@ public partial class AutoRefEliminationStage : IAutoRef
     private bool redTimeoutRequest;
     private bool blueTimeoutRequest;
 
+    private int mpLinkId;
+
     private int repeat = 2;
 
     private TeamColor firstPick = TeamColor.None;
@@ -157,6 +159,8 @@ public partial class AutoRefEliminationStage : IAutoRef
                 var parts = content.Split('/');
                 var idPart = parts.Last().Split(' ')[0];
                 lobbyChannelName = $"#mp_{idPart}";
+
+                mpLinkId = int.Parse(idPart);
 
                 await client!.JoinChannelAsync(lobbyChannelName);
                 await InitializeLobbySettings();
@@ -294,6 +298,7 @@ public partial class AutoRefEliminationStage : IAutoRef
                 break;
             
             case "finish":
+                currentMatch!.MpLinkId = mpLinkId;
                 await SendMessageBothWays("!mp close");
                 await client!.DisconnectAsync();
                 break;

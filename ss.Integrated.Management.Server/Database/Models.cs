@@ -35,6 +35,9 @@ public class Models
         
         [Column("picked_maps")]
         public List<RoundChoice>? PickedMaps { get; set; }
+        
+        [Column("mp_link_id")]
+        public int MpLinkId { get; set; }
 
         [ForeignKey("RoundId")]
         public virtual Round Round { get; set; }
@@ -70,6 +73,9 @@ public class Models
 
         [Column("is_approved")]
         public bool? Approved { get; set; }
+
+        [Column("mp_link_id")]
+        public int MpLinkId { get; set; }
         
         [ForeignKey("RefereeId")]
         public virtual RefereeInfo Referee { get; set; }
