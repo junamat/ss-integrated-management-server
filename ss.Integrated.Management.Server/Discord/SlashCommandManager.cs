@@ -20,6 +20,7 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
         public string AvailBlue { get; set; }
         public string RedName { get; set; }
         public string BlueName { get; set; }
+        public int RoundId { get; set; }
     }
 
     public static Dictionary<string, PendingMatch> PendingMatches = new();
@@ -250,7 +251,7 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
             Id = roomId,
             RoundId = roundId,
             StartTime = DateTime.SpecifyKind(result, DateTimeKind.Utc),
-            RequestedBy = 1, // user_id == 1 -> 16393244 -> Furina :)
+            RequestedBy = null,
             RefereeId = null,
             Approved = true,
         };
@@ -283,7 +284,7 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
 
     [RequireFromEnvId("DISCORD_REFEREE_ROLE_ID")]
     [SlashCommand("creatematchup", "Crea una match verificando disponibilidad")]
-    public async Task CreateMatchCheck(string matchId, string teamRed, string teamBlue, string fridayDate)
+    public async Task CreateMatchCheck(string matchId, string teamRed, string teamBlue, string fridayDate, int roundId)
     {
         await DeferAsync(ephemeral: false);
 
@@ -292,8 +293,15 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
             await FollowupAsync("Fecha inválida. Usa formato YYYY-MM-DD.");
             return;
         }
+        
 
         await using var db = new ModelsContext();
+        
+        if (db.Rounds.FirstOrDefault(round => round.Id == roundId) == null)
+        {
+            await FollowupAsync("No existe la ronda especificada");
+            return;
+        }
 
         var userRed = await db.Users
             .Include(u => u.OsuData)
@@ -330,6 +338,7 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
             AvailBlue = availBlue,
             RedName = teamRed,
             BlueName = teamBlue,
+            RoundId = roundId,
         };
 
         var menu = new SelectMenuBuilder()
@@ -462,15 +471,13 @@ public class SlashCommandManager : InteractionModuleBase<SocketInteractionContex
 
         await using var db = new ModelsContext();
 
-        int defaultRoundId = 1;
-
         var match = new Models.MatchRoom
         {
             Id = pm.MatchId,
             TeamRedId = pm.RedId,
             TeamBlueId = pm.BlueId,
             StartTime = finalDate,
-            RoundId = defaultRoundId,
+            RoundId = pm.RoundId,
             RefereeId = null,
         };
 
