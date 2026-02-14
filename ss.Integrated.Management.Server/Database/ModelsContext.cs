@@ -16,8 +16,8 @@ public class ModelsContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        //optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING") ?? throw new InvalidOperationException());
-        optionsBuilder.UseNpgsql("Host=localhost;Database=ss26db;Username=ss;Password=ss;");
+        optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING") ?? throw new InvalidOperationException());
+        //optionsBuilder.UseNpgsql("Host=localhost;Database=ss26db;Username=ss;Password=ss;");
         
         // 👇 AGREGA ESTO: Imprimirá cada consulta SQL, cada conexión y cada error interno
         optionsBuilder.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
