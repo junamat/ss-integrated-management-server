@@ -268,7 +268,7 @@ public class Models
         
         [Column("max_combo")]
         public int MaxCombo { get; set; }
-        
+        /// <summary>SS, S, A, B, etc.</summary>
         [Column("grade")]
         public string Grade  { get; set; }
         
@@ -302,8 +302,6 @@ public class Models
     {
         TeamBlue,
         TeamRed,
-
-        /// <summary>Use only for initialization or neutral states.</summary>
         None
     };
 
@@ -312,7 +310,7 @@ public class Models
     /// </summary>
     public enum BansType
     {
-        /// <summary>Standard snake draft or fixed order.</summary>
+        /// <summary>Have players perform their second ban after the fourth pick.</summary>
         SpanishShowdown = 0,
         Other = 1,
     };
