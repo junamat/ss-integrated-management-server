@@ -6,6 +6,55 @@ namespace ss.Internal.Management.Server.AutoRef;
 /// <summary>
 /// Container for all Entity Framework Core data models.
 /// </summary>
+/// <remarks>
+/// ## Database Schema (ER Diagram)
+/// \dot
+/// digraph DatabaseSchema {
+///     // Graph Settings
+///     graph [rankdir=LR, splines=ortho, nodesep=0.8, ranksep=1.0, fontname="helvetica"];
+///     node [shape=record, style=filled, fillcolor="#EAFAF1", fontname="helvetica", fontsize=10];
+///     edge [fontname="helvetica", fontsize=8, color="#5D6D7E", arrowsize=0.8];
+///
+///     // --- Nodes (Tables) ---
+///     User [label="{User|+ Id\l+ OsuID\l+ DiscordID\l}", fillcolor="#D6EAF8"];
+///     OsuUser [label="{OsuUser|+ Id\l+ Username\l+ Rank\l}"];
+///     
+///     Referee [label="{RefereeInfo|+ Id\l+ DisplayName\l+ IRC\l}", fillcolor="#FCF3CF"];
+///     
+///     Round [label="{Round|+ Id\l+ Name\l+ BestOf\l+ MapPool\l}", fillcolor="#FADBD8"];
+///     
+///     MatchRoom [label="{MatchRoom|+ Id\l+ MpLink\l+ State\l}", fillcolor="#D5F5E3"];
+///     QualRoom [label="{QualifierRoom|+ Id\l+ StartTime\l}", fillcolor="#D5F5E3"];
+///     
+///     Player [label="{Player|+ Id\l+ Availability\l}"];
+///     Score [label="{ScoreResults|+ Id\l+ Score\l+ Accuracy\l+ Grade\l}"];
+///
+///     // --- Relationships (Foreign Keys) ---
+///     
+///     // User Identity
+///     User -> OsuUser [label="1:1", arrowhead=none];
+///
+///     // Match Room Relationships
+///     MatchRoom -> Round [label="Uses Rules"];
+///     MatchRoom -> Referee [label="Managed By"];
+///     MatchRoom -> User [label="TeamRed", color="#E74C3C"];
+///     MatchRoom -> User [label="TeamBlue", color="#3498DB"];
+///
+///     // Qualifier Relationships
+///     QualRoom -> Round [label="Uses Rules"];
+///     QualRoom -> Referee [label="Managed By"];
+///     QualRoom -> User [label="Requested By"];
+///
+///     // Player / Registration
+///     Player -> User [label="Is A"];
+///     Player -> QualRoom [label="Assigned To"];
+///
+///     // Scoring
+///     Score -> User [label="Set By"];
+///     Score -> Round [label="Map Info"];
+/// }
+/// \enddot
+/// </remarks>
 public class Models
 {
 
