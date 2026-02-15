@@ -263,12 +263,14 @@ Players interact with the system primarily by typing map slots in the chat when 
 To ensure successful deployment of the AutoRef system, the following environment configuration is required:
 
 - `DISCORD_REFEREE_ROLE_ID`: ID of the Discord role to be pinged during `!panic` events.
+
+- `DISCORD_BOT_TOKEN`: Token used by the Discord bot that manages everything
+
+- `DISCORD_MATCHES_CHANNEL_ID`: ID of the Discord channel where match threads will be created
+
+- `DISCORD_GUILD_ID`: ID of the Discord server where your tournament is taking place
     
-- `CONNECTION_STRINGS`: PostgreSQL connection string.
-    
-- `OSU_IRC_PASSWORD`: (Encrypted) Token for Bancho authentication.
-    
-- `OSU_API_KEY`: For fetching auxiliary user data.
+- `POSTGRESQL_CONNECTION_STRING`: PostgreSQL connection string.
 
 ## 6. Known Limitations
 
