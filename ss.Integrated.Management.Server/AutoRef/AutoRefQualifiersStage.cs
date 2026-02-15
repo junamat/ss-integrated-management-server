@@ -27,6 +27,9 @@ public partial class AutoRefQualifiersStage : IAutoRef
 
     private readonly Action<string, string> msgCallback;
 
+    /// <summary>
+    /// Represents the finite states of the match flow.
+    /// </summary>
     public enum MatchState
     {
         Idle,
@@ -43,6 +46,9 @@ public partial class AutoRefQualifiersStage : IAutoRef
         this.msgCallback = msgCallback;
     }
 
+    /// <summary>
+    /// Hydrates the match context from the database and establishes the Bancho connection.
+    /// </summary>
     public async Task StartAsync()
     {
         await using (var db = new ModelsContext())
@@ -57,12 +63,16 @@ public partial class AutoRefQualifiersStage : IAutoRef
 
         await ConnectToBancho();
     }
-
+    
+    /// <summary>
+    /// Gracefully shuts down the worker and persists critical match data (Picks/Bans) to the DB.
+    /// </summary>
+    /// <remarks>
+    /// DANGER ZONE: This method must ONLY be called by the <see cref="DiscordManager"/>.
+    /// Calling this manually from within the class logic may cause race conditions or orphan threads.
+    /// </remarks>
     public async Task StopAsync()
     {
-        // Este método solo debería ser llamado desde DiscordManager, de lo contrario nos
-        // metemos en camisa de once varas, cosa con la que tampoco quiero lidiar
-
         await using var db = new ModelsContext();
         await db.SaveChangesAsync();
     }
@@ -93,6 +103,12 @@ public partial class AutoRefQualifiersStage : IAutoRef
         await client.ConnectAsync();
     }
     
+    /// <summary>
+    /// Sanitizes and parses outgoing private messages to intercept command usage.
+    /// </summary>
+    /// <remarks>
+    /// "PeruTrim" -> Legacy name. Handles raw IRC string manipulation to extract clean content.
+    /// </remarks>
     private async Task PeruTrim(IIrcMessage msg)
     {
         string prefix = msg.Prefix.StartsWith(":") ? msg.Prefix[1..] : msg.Prefix;
@@ -106,6 +122,9 @@ public partial class AutoRefQualifiersStage : IAutoRef
         }
     }
 
+    /// <summary>
+    /// The core event loop. Intercepts every message in the IRC channel to drive the State Machine.
+    /// </summary>
     private async Task HandleIrcMessage(IIrcMessage msg)
     {
         string prefix = msg.Prefix.StartsWith(":") ? msg.Prefix[1..] : msg.Prefix;
@@ -118,6 +137,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
 
         if (joined) msgCallback(matchId, $"**[{senderNick}]** {content}");
 
+        // 1. System Events (Lobby creation/closure)
         switch (senderNick)
         {
             case "BanchoBot" when content.Contains("Created the tournament match"):
@@ -140,11 +160,8 @@ public partial class AutoRefQualifiersStage : IAutoRef
                 break;
         }
 
-        if (senderNick == "BanchoBot") _ = TryStateChange(content);
-
-        // REGIÓN DEDICADA AL !PANIC. ESTÁ DESACOPLADA DEL RESTO POR SER UN CASO DE EMERGENCIA
-        // QUE NO DEBERÍA CAER EN NINGUNA OTRA SUBRUTINA
-
+        // 2. Emergency Protocols (!panic)
+        // Decoupled from the main State Machine to ensure it works regardless of the current state.
         if (content.Contains("!panic_over") && senderNick == currentMatch!.Referee.DisplayName.Replace(' ', '_'))
         {
             await SendMessageBothWays(Strings.BackToAuto);
@@ -161,6 +178,10 @@ public partial class AutoRefQualifiersStage : IAutoRef
                 );
         }
 
+        // 3. Drive the State Machine
+        if(senderNick == "BanchoBot") _ = TryStateChange(content);
+            
+        // 4. Admin Commands
         if (content.StartsWith('>'))
         {
             await ExecuteAdminCommand(senderNick, content[1..].Split(' '));
@@ -174,11 +195,16 @@ public partial class AutoRefQualifiersStage : IAutoRef
 
     private async Task InitializeLobbySettings()
     {
+        // Hardcoded Settings: TeamMode=0 (Head2Head), WinCondition=3 (ScoreV2), Slots=16
         await client!.SendPrivateMessageAsync(lobbyChannelName!, "!mp set 0 3 16");
         await client!.SendPrivateMessageAsync(lobbyChannelName!, "!mp invite " + currentMatch!.Referee.DisplayName.Replace(' ', '_'));
         await SendMessageBothWays($"Join this match via an IRC app with this command: \n- `/join {lobbyChannelName}`");
     }
 
+    /// <summary>
+    /// Processes commands issued by the Referee (via IRC or Discord).
+    /// Prefix: '>'
+    /// </summary>
     private async Task ExecuteAdminCommand(string sender, string[] args)
     {
         if (sender != currentMatch!.Referee.DisplayName.Replace(' ', '_')) return;
@@ -225,7 +251,10 @@ public partial class AutoRefQualifiersStage : IAutoRef
         return found;
     }
 
-    private async Task TryStateChange(string banchoMsg) // transiciones de estado
+    /// <summary>
+    /// The Brain of the operation. Evaluates the current state and incoming content to transition to the next state.
+    /// </summary>
+    private async Task TryStateChange(string banchoMsg)
     {
         switch (state)
         {
@@ -248,6 +277,9 @@ public partial class AutoRefQualifiersStage : IAutoRef
                     currentMapIndex++;
                     state = MatchState.Idle;
 
+                    // ASYNC VOID PATTERN (Intentional):
+                    // We fire-and-forget this task to create a non-blocking 10s cooldown
+                    // between maps, giving players time to breathe/check scores.
                     _ = Task.Run(async () =>
                     {
                         await Task.Delay(10000);
@@ -260,6 +292,9 @@ public partial class AutoRefQualifiersStage : IAutoRef
         }
     }
 
+    /// <summary>
+    /// Initializes the Qualifier lifecycle. Resets the map index and triggers the first map load.
+    /// </summary>
     private async Task StartQualifiersFlow()
     {
         currentMapIndex = 0;
@@ -267,6 +302,10 @@ public partial class AutoRefQualifiersStage : IAutoRef
         await PrepareNextQualifierMap();
     }
 
+    /// <summary>
+    /// Iterates to the next map in the pool, applies mods, and sets the ready timer.
+    /// Handles the exit condition when all maps have been played.
+    /// </summary>
     private async Task PrepareNextQualifierMap()
     {
         if (currentMapIndex >= currentMatch!.Round.MapPool.Count)

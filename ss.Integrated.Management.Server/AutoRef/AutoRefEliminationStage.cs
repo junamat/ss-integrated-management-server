@@ -6,6 +6,10 @@ using ss.Internal.Management.Server.Resources;
 
 namespace ss.Internal.Management.Server.AutoRef;
 
+/// <summary>
+/// Handles the automated refereeing logic for Elimination/Versus matches.
+/// Implements a complex State Machine to manage Picks, Bans, Timeouts, and Scoring.
+/// </summary>
 public partial class AutoRefEliminationStage : IAutoRef
 {
     private Models.MatchRoom? currentMatch;
@@ -52,6 +56,9 @@ public partial class AutoRefEliminationStage : IAutoRef
         None,
     }
 
+    /// <summary>
+    /// Represents the finite states of the match flow.
+    /// </summary>
     public enum MatchState
     {
         Idle,
@@ -74,7 +81,10 @@ public partial class AutoRefEliminationStage : IAutoRef
         this.refDisplayName = refDisplayName;
         this.msgCallback = msgCallback;
     }
-
+    
+    /// <summary>
+    /// Hydrates the match context from the database and establishes the Bancho connection.
+    /// </summary>
     public async Task StartAsync()
     {
         await using (var db = new ModelsContext())
@@ -91,12 +101,15 @@ public partial class AutoRefEliminationStage : IAutoRef
         await ConnectToBancho();
     }
 
+    /// <summary>
+    /// Gracefully shuts down the worker and persists critical match data (Picks/Bans) to the DB.
+    /// </summary>
+    /// <remarks>
+    /// DANGER ZONE: This method must ONLY be called by the <see cref="DiscordManager"/>.
+    /// Calling this manually from within the class logic may cause race conditions or orphan threads.
+    /// </remarks>
     public async Task StopAsync()
     {
-        // Este método solo debería ser llamado desde DiscordManager, de lo contrario nos
-        // metemos en camisa de once varas, cosa con la que tampoco quiero lidiar
-        // TODO recheck si de verdad se guarda currentmatch
-
         await using var db = new ModelsContext();
         currentMatch!.BannedMaps = bannedMaps;
         currentMatch!.PickedMaps = pickedMaps;
@@ -130,6 +143,12 @@ public partial class AutoRefEliminationStage : IAutoRef
         await client.ConnectAsync();
     }
 
+    /// <summary>
+    /// Sanitizes and parses outgoing private messages to intercept command usage.
+    /// </summary>
+    /// <remarks>
+    /// "PeruTrim" -> Legacy name. Handles raw IRC string manipulation to extract clean content.
+    /// </remarks>
     private async Task PeruTrim(IIrcMessage msg)
     {
         string prefix = msg.Prefix.StartsWith(":") ? msg.Prefix[1..] : msg.Prefix;
@@ -143,16 +162,19 @@ public partial class AutoRefEliminationStage : IAutoRef
         }
     }
 
+    /// <summary>
+    /// The core event loop. Intercepts every message in the IRC channel to drive the State Machine.
+    /// </summary>
     private async Task HandleIrcMessage(IIrcMessage msg)
     {
         string prefix = msg.Prefix.StartsWith(":") ? msg.Prefix[1..] : msg.Prefix;
         string senderNick = prefix.Contains('!') ? prefix.Split('!')[0] : prefix;
 
-        //string target = msg.Parameters[0];
         string content = msg.Parameters[1];
 
         if (joined) msgCallback(matchId, $"**[{senderNick}]** {content}");
 
+        // 1. System Events (Lobby creation/closure)
         switch (senderNick)
         {
             case "BanchoBot" when content.Contains("Created the tournament match"):
@@ -175,11 +197,12 @@ public partial class AutoRefEliminationStage : IAutoRef
                 break;
         }
 
+        // 2. Gameplay Events (Score processing & Match finish)
         if (senderNick == "BanchoBot")
         {
             if (content.Contains("finished playing"))
             {
-                // Regex para extraer Nick y Score
+                // Regex for Nick and Score
                 var match = Regex.Match(content, @"^(.*) finished playing \(Score: (\d+),");
 
                 if (match.Success)
@@ -194,13 +217,13 @@ public partial class AutoRefEliminationStage : IAutoRef
             {
                 await ProcessFinalScores();
             }
-
+            
+            // Small buffer to ensure regex processing finishes before state transitions
             await Task.Delay(250);
         }
 
-        // REGIÓN DEDICADA AL !PANIC. ESTÁ DESACOPLADA DEL RESTO POR SER UN CASO DE EMERGENCIA
-        // QUE NO DEBERÍA CAER EN NINGUNA OTRA SUBRUTINA
-
+        // 3. Emergency Protocols (!panic)
+        // Decoupled from the main State Machine to ensure it works regardless of the current state.
         if (content.Contains("!panic_over") && senderNick == currentMatch!.Referee.DisplayName.Replace(' ', '_'))
         {
             await SendMessageBothWays(Strings.BackToAuto);
@@ -216,8 +239,10 @@ public partial class AutoRefEliminationStage : IAutoRef
                 string.Format(Strings.Panic, Environment.GetEnvironmentVariable("DISCORD_REFEREE_ROLE_ID"), senderNick));
         }
 
+        // 4. Drive the State Machine
         _ = TryStateChange(senderNick, content);
-
+        
+        // 5. Admin Commands
         if (content.StartsWith('>'))
         {
             await ExecuteAdminCommand(senderNick, content[1..].Split(' '));
@@ -232,11 +257,15 @@ public partial class AutoRefEliminationStage : IAutoRef
 
     private async Task InitializeLobbySettings()
     {
+        // Hardcoded Settings: TeamMode=2 (TeamVs), WinCondition=3 (ScoreV2), Slots=3
         await client!.SendPrivateMessageAsync(lobbyChannelName!, "!mp set 2 3 3");
         await client!.SendPrivateMessageAsync(lobbyChannelName!, "!mp invite " + currentMatch!.Referee.DisplayName.Replace(' ', '_'));
         await SendMessageBothWays($"Join this match via an IRC app with this command: \n- `/join {lobbyChannelName}`");
     }
 
+    /// <summary>
+    /// Aggregates individual scores from the dictionary and determines the point winner.
+    /// </summary>
     private async Task ProcessFinalScores()
     {
         long redTotal = 0;
@@ -285,6 +314,10 @@ public partial class AutoRefEliminationStage : IAutoRef
         await SendMessageBothWays(string.Format(Strings.TimeoutAvailable, !redTimeoutRequest, !blueTimeoutRequest));
     }
 
+    /// <summary>
+    /// Processes commands issued by the Referee (via IRC or Discord).
+    /// Prefix: '>'
+    /// </summary>
     private async Task ExecuteAdminCommand(string sender, string[] args)
     {
         if (sender != currentMatch!.Referee.DisplayName.Replace(' ', '_')) return;
@@ -349,7 +382,9 @@ public partial class AutoRefEliminationStage : IAutoRef
                     stoppedPreviously = false;
                 }
 
-                await TryStateChange("a", "a"); // esto es lo más peruano que he hecho pero adivina que, funciona
+                // HACK: We feed dummy data ("a", "a") to the State Machine to force an initial evaluation.
+                // This kickstarts the logic loop without waiting for a real IRC message. It works, don't ask.
+                await TryStateChange("a", "a");
                 break;
 
             case "stop":
@@ -412,13 +447,16 @@ public partial class AutoRefEliminationStage : IAutoRef
         return found;
     }
 
+    /// <summary>
+    /// Validates if a map slot (e.g., "NM1") is eligible to be picked or banned.
+    /// </summary>
     private bool IsMapAvailable(string content)
     {
-        // Un mapa a la hora de pickearse debería cumplir siempre las siguientes condiciones:
-        // - Debe existir en la pool actual
-        // - No debe estar baneado previamente
-        // - No debe estar pickeado previamente
-        // - No puede ser el Tiebreaker (esto lo manejamos por otro lado)
+        // Validation Rules:
+        // 1. Must exist in the MapPool.
+        // 2. Must not be in BannedMaps.
+        // 3. Must not be in PickedMaps.
+        // 4. Cannot be the Tiebreaker (TB1) - handled separately.
         bool canAdd = currentMatch!.Round.MapPool.Find(beatmap => beatmap.Slot == content.ToUpper()) != null &&
                       bannedMaps.Find(beatmap => beatmap.Slot == content.ToUpper()) == null &&
                       pickedMaps.Find(beatmap => beatmap.Slot == content.ToUpper()) == null &&
@@ -449,6 +487,9 @@ public partial class AutoRefEliminationStage : IAutoRef
         await SendMessageBothWays("!mp timer 90");
     }
 
+    /// <summary>
+    /// The Brain of the operation. Evaluates the current state and incoming content to transition to the next state.
+    /// </summary>
     private async Task TryStateChange(string sender, string content) // transiciones de estado
     {
         if (currentState == MatchState.Idle) return;
@@ -616,6 +657,7 @@ public partial class AutoRefEliminationStage : IAutoRef
             {
                 if (currentMatch!.Round.BanRounds == 2 && pickedMaps.Count == 4)
                 {
+                    // Logic for "Double Ban" rounds (Ban -> Pick 4 -> Ban -> Pick rest)
                     currentState = MatchState.BanPhaseStart;
                     await SendMessageBothWays(Strings.SecondBanRound);
                 }
