@@ -24,7 +24,7 @@ To deploy the database schema and apply migrations, execute the following EF Cor
 
 Bash
 
-```
+```sh
 # Initialize migration snapshot
 dotnet ef migrations add InitialCreate
 
