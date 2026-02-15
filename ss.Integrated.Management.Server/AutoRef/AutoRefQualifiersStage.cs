@@ -5,6 +5,44 @@ using ss.Internal.Management.Server.Resources;
 
 namespace ss.Internal.Management.Server.AutoRef;
 
+/// <summary>
+/// Handles the automated refereeing logic for Qualifier Lobbies.
+/// manages a linear flow of maps with no picks/bans.
+/// </summary>
+/// <remarks>
+/// ## State Transition Diagram
+/// \dot
+/// digraph QualifiersStateMachine {
+///     // Graph Settings
+///     graph [fontname = "helvetica", fontsize = 10, nodesep = 0.5, ranksep = 0.7];
+///     node [fontname = "helvetica", fontsize = 10, shape = box, style = rounded];
+///     edge [fontname = "helvetica", fontsize = 8];
+///
+///     // Nodes
+///     Init [label="Start\n(Lobby Idle)", shape=circle, width=0.8, fixedsize=true, style=filled, fillcolor="#E5E7E9"];
+///     Idle [label="Idle\n(Cooldown / Loading)", style="filled,rounded", fillcolor="#EEEEEE"];
+///     WaitStart [label="WaitingForStart\n(Timer Active)"];
+///     Playing [label="Playing\n(Map in Progress)", style="filled,rounded", fillcolor="#D4E6F1"];
+///     Finished [label="MatchFinished\n(Pool Complete)", style="filled,rounded", fillcolor="#D5F5E3"];
+///     Panic [label="MatchOnHold\n(PANIC)", shape=doubleoctagon, style=filled, fillcolor="#E74C3C", fontcolor="white"];
+///
+///     // Main Flow
+///     Init -> Idle [label="Admin types\n!start\n(auto-ref engaged)"];
+///     
+///     // The Loop
+///     Idle -> WaitStart [label="Next Map Available\n(Loaded Map & Mods)"];
+///     WaitStart -> Playing [label="Players Ready\nOR Countdown ends"];
+///     Playing -> Idle [label="Map Finished\n(Increment Map Index)"];
+///
+///     // Exit Condition
+///     Idle -> Finished [label="No Maps Left"];
+///
+///     // Emergency System
+///     {WaitStart Playing} -> Panic [label="!panic\n(ANYONE)", color="#E74C3C", fontcolor="#E74C3C"];
+///     Panic -> WaitStart [label="!panic_over\n(REF ONLY)", color="#27AE60", fontcolor="#27AE60", penwidth=2];
+/// }
+/// \enddot
+/// </remarks>
 public partial class AutoRefQualifiersStage : IAutoRef
 {
     private Models.QualifierRoom? currentMatch;
@@ -46,9 +84,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
         this.msgCallback = msgCallback;
     }
 
-    /// <summary>
-    /// Hydrates the match context from the database and establishes the Bancho connection.
-    /// </summary>
+    /// <inheritdoc />
     public async Task StartAsync()
     {
         await using (var db = new ModelsContext())
@@ -64,13 +100,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
         await ConnectToBancho();
     }
     
-    /// <summary>
-    /// Gracefully shuts down the worker and persists critical match data (Picks/Bans) to the DB.
-    /// </summary>
-    /// <remarks>
-    /// DANGER ZONE: This method must ONLY be called by the <see cref="DiscordManager"/>.
-    /// Calling this manually from within the class logic may cause race conditions or orphan threads.
-    /// </remarks>
+    /// <inheritdoc />
     public async Task StopAsync()
     {
         await using var db = new ModelsContext();
@@ -188,6 +218,7 @@ public partial class AutoRefQualifiersStage : IAutoRef
         }
     }
 
+    /// <inheritdoc />
     public async Task SendMessageFromDiscord(string content)
     {
         await client!.SendPrivateMessageAsync(lobbyChannelName!, content);
