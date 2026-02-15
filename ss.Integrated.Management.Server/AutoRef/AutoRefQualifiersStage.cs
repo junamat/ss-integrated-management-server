@@ -24,10 +24,10 @@ namespace ss.Internal.Management.Server.AutoRef;
 ///     WaitStart [label="WaitingForStart\n(Timer Active)"];
 ///     Playing [label="Playing\n(Map in Progress)", style="filled,rounded", fillcolor="#D4E6F1"];
 ///     Finished [label="MatchFinished\n(Pool Complete)", style="filled,rounded", fillcolor="#D5F5E3"];
-///     OnHold [label="MatchOnHold\n(Panic Mode)", shape=octagon, style=filled, fillcolor="#FADBD8"];
+///     Panic [label="MatchOnHold\n(PANIC)", shape=doubleoctagon, style=filled, fillcolor="#E74C3C", fontcolor="white"];
 ///
 ///     // Main Flow
-///     Init -> Idle [label="Admin types\n!start"];
+///     Init -> Idle [label="Admin types\n!start\n(auto-ref engaged)"];
 ///     
 ///     // The Loop
 ///     Idle -> WaitStart [label="Next Map Available\n(Loaded Map & Mods)"];
@@ -38,9 +38,8 @@ namespace ss.Internal.Management.Server.AutoRef;
 ///     Idle -> Finished [label="No Maps Left"];
 ///
 ///     // Emergency System
-///     WaitStart -> OnHold [label="!panic"];
-///     Playing -> OnHold [label="!panic"];
-///     OnHold -> WaitStart [label="!panic_over\n(Resume Timer)"];
+///     {WaitStart Playing} -> Panic [label="!panic\n(ANYONE)", color="#E74C3C", fontcolor="#E74C3C"];
+///     Panic -> WaitStart [label="!panic_over\n(REF ONLY)", color="#27AE60", fontcolor="#27AE60", penwidth=2];
 /// }
 /// \enddot
 /// </remarks>
