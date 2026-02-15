@@ -201,7 +201,7 @@ public partial class AutoRefEliminationStage : IAutoRef
         // REGIÓN DEDICADA AL !PANIC. ESTÁ DESACOPLADA DEL RESTO POR SER UN CASO DE EMERGENCIA
         // QUE NO DEBERÍA CAER EN NINGUNA OTRA SUBRUTINA
 
-        if (content.Contains("!panic_over"))
+        if (content.Contains("!panic_over") && senderNick == currentMatch!.Referee.DisplayName.Replace(' ', '_'))
         {
             await SendMessageBothWays(Strings.BackToAuto);
             currentState = MatchState.WaitingForStart;
