@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['rawscoredata_0',['RawScoreData',['../classScoreImporter_1_1RawScoreData.html',1,'ScoreImporter']]],
+  ['readyasync_1',['ReadyAsync',['../classDiscordManager.html#a0d2525169060293fee9162c64b60a0da',1,'DiscordManager']]],
+  ['redid_2',['RedId',['../classSlashCommandManager_1_1PendingMatch.html#aa9297640998bf04277dc0bcf13d2a5ea',1,'SlashCommandManager::PendingMatch']]],
+  ['redname_3',['RedName',['../classSlashCommandManager_1_1PendingMatch.html#acd1c4f708ef8c2beb411100afb1acc4c',1,'SlashCommandManager::PendingMatch']]],
+  ['redtimeoutrequest_4',['redTimeoutRequest',['../classAutoRefEliminationStage.html#a20e6c2c5553c534fabaef2827a2c0da3',1,'AutoRefEliminationStage']]],
+  ['refdisplayname_5',['refDisplayName',['../classAutoRefEliminationStage.html#a14fc0f69ed144033785b04b2d0d7480d',1,'AutoRefEliminationStage::refDisplayName'],['../classAutoRefQualifiersStage.html#a658529232a226e42f8773e061165c735',1,'AutoRefQualifiersStage::refDisplayName']]],
+  ['referee_6',['Referee',['../classModels_1_1MatchRoom.html#a45151fbc7b69c2dbc04632ccb05e42bb',1,'Models::MatchRoom::Referee'],['../Models_8cs.html#a4bf10898a5fa1844143a5be12fa524a0',1,'Referee:&#160;Models.cs']]],
+  ['refereeid_7',['RefereeId',['../classModels_1_1MatchRoom.html#a0cc59fbb173aa747ecec10f3f1a5054e',1,'Models::MatchRoom::RefereeId'],['../Models_8cs.html#a24c15b538a104055e7634f3b0ca9f68f',1,'RefereeId:&#160;Models.cs']]],
+  ['refereeinfo_8',['RefereeInfo',['../classModels_1_1RefereeInfo.html',1,'Models']]],
+  ['referees_9',['Referees',['../classModelsContext.html#a010b6b4ddcc58288f6ba5802c7b192a9',1,'ModelsContext']]],
+  ['referencedate_10',['ReferenceDate',['../classSlashCommandManager_1_1PendingMatch.html#a93bf0c6f9e46976a679e7354392910ba',1,'SlashCommandManager::PendingMatch']]],
+  ['removematchasync_11',['RemoveMatchAsync',['../classSlashCommandManager.html#ab9cbd7a6a05e40bb65640ec54c12e025',1,'SlashCommandManager']]],
+  ['removequalifiersroomasync_12',['RemoveQualifiersRoomAsync',['../classSlashCommandManager.html#a96f83ad9f228ee9d3d62a6ec2238b4ad',1,'SlashCommandManager']]],
+  ['repeat_13',['repeat',['../classAutoRefEliminationStage.html#aea43288a31346b49bc9f4fa15d72f233',1,'AutoRefEliminationStage']]],
+  ['requirefromenvidattribute_14',['RequireFromEnvIdAttribute',['../classRequireFromEnvIdAttribute.html',1,'RequireFromEnvIdAttribute'],['../classRequireFromEnvIdAttribute.html#a8afa47daa87c0d59e4b1b0cea6b99efc',1,'RequireFromEnvIdAttribute::RequireFromEnvIdAttribute()']]],
+  ['requireroleattribute_2ecs_15',['RequireRoleAttribute.cs',['../RequireRoleAttribute_8cs.html',1,'']]],
+  ['round_16',['Round',['../classModels_1_1Round.html',1,'Models::Round'],['../classModels_1_1MatchRoom.html#a2d22ab241b783ba40ed1a176cd8cf55f',1,'Models::MatchRoom::Round'],['../classModels.html#a53cc28d5ee6c15850d3ff34cacf32c6f',1,'Models::Round'],['../Models_8cs.html#a42e0e4daa8f3977b4a22c8fb8b8b598a',1,'Round:&#160;Models.cs']]],
+  ['roundbeatmap_17',['RoundBeatmap',['../classModels_1_1RoundBeatmap.html',1,'Models']]],
+  ['roundid_18',['RoundId',['../classModels_1_1MatchRoom.html#ae557df760ca48e0245d00dad9df2cff6',1,'Models::MatchRoom::RoundId'],['../classModels.html#a5eeb51b2d786b433d3441f4d09662f1b',1,'Models::RoundId'],['../classSlashCommandManager_1_1PendingMatch.html#a3f885ab1155d93ed66df05230d3a2f14',1,'SlashCommandManager::PendingMatch::RoundId'],['../Models_8cs.html#a07f58904c9782c1d50a8a34e3c69c5b3',1,'RoundId:&#160;Models.cs']]],
+  ['rounds_19',['Rounds',['../classModelsContext.html#a7d113a845ae822dc4e8bb6e3e3e83015',1,'ModelsContext']]]
+];

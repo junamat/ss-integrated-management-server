@@ -1,0 +1,9 @@
+<map id="SlashCommandManager" name="SlashCommandManager">
+<area shape="rect" id="Node000001" title=" " alt="" coords="384,74,564,102"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,221,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,36,360,54,428,73,423,74,359,60,236,41"/>
+<area shape="rect" id="Node000003" href="$classDiscordManager.html" title="Service responsible for managing the lifecycle of Discord interactions and bridging them with the Aut..." alt="" coords="49,74,177,102"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,85,385,86,381,90,193,90"/>
+<area shape="rect" id="Node000004" href="$classSlashCommandManager_1_1PendingMatch.html" title=" " alt="" coords="23,144,203,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="219,160,288,152,359,138,406,120,445,103,450,101,408,125,360,143,289,158,219,166"/>
+</map>
