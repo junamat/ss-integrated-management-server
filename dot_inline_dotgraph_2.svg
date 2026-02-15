@@ -46,14 +46,14 @@
   </g>
 </defs>
 <script type="application/ecmascript">
-var viewWidth = 321;
+var viewWidth = 358;
 var viewHeight = 483;
 </script>
 <script type="application/ecmascript" xlink:href="svg.min.js"/>
 <svg id="graph" class="graph">
 <g id="viewport">
 <title>QualifiersStateMachine</title>
-<polygon fill="white" stroke="transparent" points="-4,4 -4,-478.92 316.89,-478.92 316.89,4 -4,4"/>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-478.92 353.89,-478.92 353.89,4 -4,4"/>
 <!-- Init -->
 <g id="node1" class="node">
 <title>Init</title>
@@ -86,10 +86,10 @@ var viewHeight = 483;
 <!-- Idle&#45;&gt;WaitStart -->
 <g id="edge2" class="edge">
 <title>Idle&#45;&gt;WaitStart</title>
-<path fill="none" stroke="black" d="M136.91,-312.9C122.8,-306.42 107.9,-298.1 95.89,-287.92 84.71,-278.46 75.09,-265.36 67.89,-253.82"/>
-<polygon fill="black" stroke="black" points="70.76,-251.8 62.64,-244.99 64.74,-255.38 70.76,-251.8"/>
-<text text-anchor="middle" x="135.39" y="-281.52" font-family="Helvetica,sans-Serif" font-size="8.00">Next Map Available</text>
-<text text-anchor="middle" x="135.39" y="-272.52" font-family="Helvetica,sans-Serif" font-size="8.00">(Load Map &amp; Mods)</text>
+<path fill="none" stroke="black" d="M126.38,-312.87C112,-306.67 97.41,-298.5 85.89,-287.92 76.07,-278.9 68.69,-266.17 63.5,-254.75"/>
+<polygon fill="black" stroke="black" points="66.59,-253.06 59.51,-245.18 60.13,-255.75 66.59,-253.06"/>
+<text text-anchor="middle" x="130.39" y="-281.52" font-family="Helvetica,sans-Serif" font-size="8.00">Next Map Available</text>
+<text text-anchor="middle" x="130.39" y="-272.52" font-family="Helvetica,sans-Serif" font-size="8.00">(Loaded Map &amp; Mods)</text>
 </g>
 <!-- Finished -->
 <g id="node5" class="node">
@@ -139,8 +139,8 @@ var viewHeight = 483;
 <title>Playing&#45;&gt;Idle</title>
 <path fill="none" stroke="black" d="M234.48,-141.04C248.9,-172.4 273.88,-240.2 246.89,-287.92 242.71,-295.32 236.61,-301.67 229.84,-307.01"/>
 <polygon fill="black" stroke="black" points="227.78,-304.19 221.66,-312.84 231.84,-309.89 227.78,-304.19"/>
-<text text-anchor="middle" x="285.89" y="-229.52" font-family="Helvetica,sans-Serif" font-size="8.00">Map Finished</text>
-<text text-anchor="middle" x="285.89" y="-220.52" font-family="Helvetica,sans-Serif" font-size="8.00">(Wait 10s)</text>
+<text text-anchor="middle" x="304.39" y="-229.52" font-family="Helvetica,sans-Serif" font-size="8.00">Map Finished</text>
+<text text-anchor="middle" x="304.39" y="-220.52" font-family="Helvetica,sans-Serif" font-size="8.00">(Increment Map Index)</text>
 </g>
 <!-- Playing&#45;&gt;OnHold -->
 <g id="edge7" class="edge">
