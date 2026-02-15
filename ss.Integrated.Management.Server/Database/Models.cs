@@ -10,53 +10,113 @@ namespace ss.Internal.Management.Server.AutoRef;
 /// ## Database Schema (ER Diagram)
 /// \dot
 /// digraph DatabaseSchema {
-///     // Graph Settings
-///     graph [rankdir=LR, splines=ortho, nodesep=0.8, ranksep=1.0, fontname="helvetica"];
-///     node [shape=record, style=filled, fillcolor="#EAFAF1", fontname="helvetica", fontsize=10];
-///     edge [fontname="helvetica", fontsize=8, color="#5D6D7E", arrowsize=0.8];
-///
-///     // --- Nodes (Tables) ---
-///     User [label="{User|+ Id\l+ OsuID\l+ DiscordID\l}", fillcolor="#D6EAF8"];
-///     OsuUser [label="{OsuUser|+ Id\l+ Username\l+ Rank\l}"];
+///     // --- 1. GLOBAL SETTINGS ---
+///     // 'ortho' gives you the clean right-angles
+///     graph [rankdir=LR, splines=ortho, nodesep=0.5, ranksep=0.8, fontname="helvetica"];
 ///     
-///     Referee [label="{RefereeInfo|+ Id\l+ DisplayName\l+ IRC\l}", fillcolor="#FCF3CF"];
+///     // --- 2. TABLE NODES (The "+ attr" aesthetic) ---
+///     // shape=record allows us to use | to create rows
+///     node [shape=record, style="filled,rounded", fillcolor="#EAFAF1", fontname="helvetica", fontsize=10, height=0.4, penwidth=1.0];
 ///     
-///     Round [label="{Round|+ Id\l+ Name\l+ BestOf\l+ MapPool\l}", fillcolor="#FADBD8"];
+///     MatchRoom [label="{ MatchRoom | + Id \l | + State \l }", fillcolor="#D5F5E3"];
+///     QualRoom  [label="{ QualifierRoom | + Id \l | + StartTime \l }", fillcolor="#D5F5E3"];
+///     Round     [label="{ Round | + Id \l | + BestOf \l }", fillcolor="#FADBD8"];
+///     User      [label="{ User | + Id \l | + DiscordID \l }", fillcolor="#D6EAF8"];
+///     OsuUser   [label="{ OsuUser | + Id \l | + Rank \l }", fillcolor="#D6EAF8"];
+///     Player    [label="{ Player | + Id \l | + Availability \l }"];
+///     Referee   [label="{ RefereeInfo | + Id \l | + IRC \l }", fillcolor="#FCF3CF"];
+///     Score     [label="{ ScoreResults | + Id \l | + Score \l }", fillcolor="#FCF3CF"];
+///
+///     // --- 3. "ROUTER" NODES (The Secret Sauce) ---
+///     // These are invisible nodes that act as labels. The lines go THROUGH them.
+///     // This forces the lines to be straight and puts the text exactly where we want it.
+///     node [shape=plaintext, style=none, fillcolor=none, width=0, height=0, fontsize=8, fontcolor="#5D6D7E"];
 ///     
-///     MatchRoom [label="{MatchRoom|+ Id\l+ MpLink\l+ State\l}", fillcolor="#D5F5E3"];
-///     QualRoom [label="{QualifierRoom|+ Id\l+ StartTime\l}", fillcolor="#D5F5E3"];
-///     
-///     Player [label="{Player|+ Id\l+ Availability\l}"];
-///     Score [label="{ScoreResults|+ Id\l+ Score\l+ Accuracy\l+ Grade\l}"];
+///     // We define a label-node for each relationship
+///     lbl_Red      [label="Red Team", fontcolor="#E74C3C"];
+///     lbl_Blue     [label="Blue Team", fontcolor="#3498DB"];
+///     lbl_Rules1   [label="Rules"];
+///     lbl_Rules2   [label="Rules"];
+///     lbl_Ref1     [label="Managed By"];
+///     lbl_Ref2     [label="Managed By"];
+///     lbl_Req      [label="Requested By"];
+///     lbl_Player   [label="Player"];
+///     lbl_IsA      [label="Is A"];
+///     lbl_1to1     [label="1:1"];
 ///
-///     // --- Relationships (Foreign Keys) ---
-///     
-///     // User Identity
-///     User -> OsuUser [label="1:1", arrowhead=none];
+///     // --- 4. EDGES ---
+///     edge [fontname="helvetica", fontsize=8, color="#5D6D7E", arrowsize=0.7];
 ///
-///     // Match Room Relationships
-///     MatchRoom -> Round [label="Uses Rules"];
-///     MatchRoom -> Referee [label="Managed By"];
-///     MatchRoom -> User [label="TeamRed", color="#E74C3C"];
-///     MatchRoom -> User [label="TeamBlue", color="#3498DB"];
+///     // MATCH -> TEAMS
+///     // Step 1: Line from Match to Label (No Arrow)
+///     edge [dir=none];
+///     MatchRoom -> lbl_Red  [color="#E74C3C"];
+///     MatchRoom -> lbl_Blue [color="#3498DB"];
+///     // Step 2: Line from Label to User (Arrow)
+///     edge [dir=forward];
+///     lbl_Red  -> User [color="#E74C3C"];
+///     lbl_Blue -> User [color="#3498DB"];
 ///
-///     // Qualifier Relationships
-///     QualRoom -> Round [label="Uses Rules"];
-///     QualRoom -> Referee [label="Managed By"];
-///     QualRoom -> User [label="Requested By"];
+///     // MATCH -> RULES
+///     edge [dir=none]; MatchRoom -> lbl_Rules1;
+///     edge [dir=forward]; lbl_Rules1 -> Round;
 ///
-///     // Player / Registration
-///     Player -> User [label="Is A"];
-///     Player -> QualRoom [label="Assigned To"];
+///     // MATCH -> REF
+///     edge [dir=none]; MatchRoom -> lbl_Ref1;
+///     edge [dir=forward]; lbl_Ref1 -> Referee;
 ///
-///     // Scoring
-///     Score -> User [label="Set By"];
-///     Score -> Round [label="Map Info"];
+///     // QUALIFIERS
+///     edge [dir=none]; QualRoom -> lbl_Rules2; QualRoom -> lbl_Ref2; QualRoom -> lbl_Req;
+///     edge [dir=forward]; 
+///     lbl_Rules2 -> Round; 
+///     lbl_Ref2 -> Referee; 
+///     lbl_Req -> User;
+///
+///     // USER SYSTEM
+///     edge [dir=none]; User -> lbl_1to1; Player -> lbl_IsA;
+///     edge [dir=forward]; lbl_1to1 -> OsuUser; lbl_IsA -> User;
+///
+///     // SCORES
+///     edge [dir=none]; Score -> lbl_Player;
+///     edge [dir=forward]; lbl_Player -> User;
 /// }
 /// \enddot
 /// </remarks>
 public class Models
 {
+    // ... ENUMS ...
+    
+    /// <summary>
+    /// Indicates which team an action belongs to.
+    /// </summary>
+    public enum TeamColor
+    {
+        TeamBlue,
+        TeamRed,
+        /// <summary>Use only for initialization or neutral states.</summary>
+        None 
+    };
+
+    /// <summary>
+    /// Defines the ban strategy for a round.
+    /// </summary>
+    public enum BansType
+    {
+        /// <summary>Standard snake draft or fixed order.</summary>
+        SpanishShowdown = 0,
+        Other = 1,
+    };
+
+    /// <summary>
+    /// Differentiates between the two main modes of the tournament.
+    /// </summary>
+    public enum MatchType
+    {
+        EliminationStage = 0,
+        QualifiersStage = 1,
+    };
+
+    // ... CLASSES ...
 
     /// <summary>
     /// Represents a scheduled match between two teams in the Elimination Stage.
@@ -317,7 +377,7 @@ public class Models
         
         [Column("max_combo")]
         public int MaxCombo { get; set; }
-        /// <summary>SS, S, A, B, etc.</summary>
+        
         [Column("grade")]
         public string Grade  { get; set; }
         
@@ -337,39 +397,6 @@ public class Models
     public class RoundChoice
     {
         public string Slot { get; set; }
-        
-        /// <summary>
-        /// The team that made this choice.
-        /// </summary>
         public TeamColor TeamColor { get; set; }
     }
-    
-    /// <summary>
-    /// Indicates which team an action belongs to.
-    /// </summary>
-    public enum TeamColor
-    {
-        TeamBlue,
-        TeamRed,
-        None
-    };
-
-    /// <summary>
-    /// Defines the ban strategy for a round.
-    /// </summary>
-    public enum BansType
-    {
-        /// <summary>Have players perform their second ban after the fourth pick.</summary>
-        SpanishShowdown = 0,
-        Other = 1,
-    };
-
-    /// <summary>
-    /// Differentiates between the two behavioral modes of the tournament: Elimination Stage (1v1 matches with bans/picks) and Qualifier Stage (pool play with no bans/picks).
-    /// </summary>
-    public enum MatchType
-    {
-        EliminationStage = 0,
-        QualifiersStage = 1,
-    };
 }
